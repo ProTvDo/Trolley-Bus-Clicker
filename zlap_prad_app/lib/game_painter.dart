@@ -151,7 +151,7 @@ class GamePainter extends CustomPainter {
     for (final seg in game.segments) {
       if (seg.dEnd < game.scrollY - 50 || seg.dStart > game.scrollY + h + 50) continue;
       pts.add(Offset(game.laneX(seg.fromLane), _screenY(seg.dStart)));
-      pts.add(Offset(game.laneX(seg.lane), _screenY(seg.dStart + GameController.grace)));
+      pts.add(Offset(game.laneX(seg.lane), _screenY(seg.dStart + game.graceFor(seg))));
       pts.add(Offset(game.laneX(seg.lane), _screenY(seg.dEnd)));
     }
     if (pts.length < 2) return;

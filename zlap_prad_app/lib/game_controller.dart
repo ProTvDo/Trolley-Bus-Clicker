@@ -19,12 +19,43 @@ class GameController extends ChangeNotifier {
   static const lanes = 3;
   static const roadFrac = 0.7;
   static const busYFrac = 0.78;
-  static const grace = 150.0;
   static const baseSpeed = 180.0;
   static const maxSpeedAdd = 160.0;
   static const maxLives = 3;
   static const tapsNeeded = 3;
   static const reconnectTime = 4.0;
+
+  // ---- difficulty levels ----
+  // Level 1: only adjacent-lane wire changes, generous reaction window.
+  // Level 2: two-lane jumps introduced, window scales with jump size so
+  //          it stays exactly as fair (per-lane) as a level-1 change.
+  // Level 3: same jumps, tighter window - a real skill test.
+  int get level {
+    if (score < 150) return 1;
+    if (score < 450) return 2;
+    return 3;
+  }
+
+  int get maxJump => level >= 2 ? 2 : 1;
+
+  double get _graceBase {
+    switch (level) {
+      case 1:
+        return 170;
+      case 2:
+        return 150;
+      default:
+        return 120;
+    }
+  }
+
+  /// Width (in track-distance units) of the transition window for [seg],
+  /// scaled by how many lanes it crosses so a 2-lane jump gets twice the
+  /// reaction time of a 1-lane change instead of the same tight window.
+  double graceFor(TrackSegment seg) {
+    final jump = max(1, (seg.lane - seg.fromLane).abs());
+    return _graceBase * jump;
+  }
 
   final _rng = Random();
   final sound = SoundEngine();
@@ -91,14 +122,14 @@ class GameController extends ChangeNotifier {
       ..clear()
       ..add(TrackSegment(fromLane: 1, lane: 1, dStart: -400, dEnd: 420, obstacles: []));
     while (segments.last.dEnd < 1200) {
-      segments.add(TrackSegment.generate(segments.last.lane, segments.last.dEnd, lanes, _rng));
+      segments.add(TrackSegment.generate(segments.last.lane, segments.last.dEnd, lanes, maxJump, _rng));
     }
   }
 
   void _ensureTrackAhead() {
     var last = segments.last;
     while (last.dEnd < scrollY + height + 300) {
-      last = TrackSegment.generate(last.lane, last.dEnd, lanes, _rng);
+      last = TrackSegment.generate(last.lane, last.dEnd, lanes, maxJump, _rng);
       segments.add(last);
     }
     while (segments.length > 4 && segments[1].dEnd < scrollY - height) {
@@ -114,7 +145,7 @@ class GameController extends ChangeNotifier {
   }
 
   List<int> _wireValidLanes(TrackSegment seg) {
-    if (scrollY < seg.dStart + grace) {
+    if (scrollY < seg.dStart + graceFor(seg)) {
       final lo = min(seg.fromLane, seg.lane);
       final hi = max(seg.fromLane, seg.lane);
       return [for (var l = lo; l <= hi; l++) l];

@@ -31,13 +31,13 @@ class TrackSegment {
     required this.obstacles,
   });
 
-  static TrackSegment generate(int fromLane, double dStart, int lanes, Random rng) {
-    // Only adjacent-lane transitions: with tap-left/tap-right controls, a
-    // two-lane skip needs two precise rapid taps and is not reliably
-    // playable, so the wire is never allowed to jump over a lane.
+  static TrackSegment generate(int fromLane, double dStart, int lanes, int maxJump, Random rng) {
+    // Lane changes are capped at maxJump lanes away from fromLane - the
+    // caller widens the reaction window proportionally to the jump size
+    // (see GameController.graceFor), so any jump up to maxJump stays fair.
     final candidates = [
-      if (fromLane - 1 >= 0) fromLane - 1,
-      if (fromLane + 1 < lanes) fromLane + 1,
+      for (var l = 0; l < lanes; l++)
+        if (l != fromLane && (l - fromLane).abs() <= maxJump) l,
     ];
     final lane = candidates[rng.nextInt(candidates.length)];
     final len = 380 + rng.nextInt(620 - 380 + 1);
