@@ -92,6 +92,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 ),
                 _buildHud(),
                 _buildMuteButton(),
+                _buildWajchaControl(),
                 AnimatedBuilder(
                   animation: _game,
                   builder: (context, _) {
@@ -164,17 +165,27 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         ),
                     ],
                   ),
-                  Row(
-                    children: List.generate(GameController.maxLives, (i) {
-                      final lost = i >= _game.lives;
-                      return Padding(
-                        padding: const EdgeInsets.only(left: 6),
-                        child: Opacity(
-                          opacity: lost ? 0.25 : 1,
-                          child: const Text('🦺', style: TextStyle(fontSize: 22)),
-                        ),
-                      );
-                    }),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Row(
+                        children: List.generate(GameController.maxLives, (i) {
+                          final lost = i >= _game.lives;
+                          return Padding(
+                            padding: const EdgeInsets.only(left: 6),
+                            child: Opacity(
+                              opacity: lost ? 0.25 : 1,
+                              child: const Text('🦺', style: TextStyle(fontSize: 22)),
+                            ),
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'poziom ${_game.level}',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white38),
+                      ),
+                    ],
                   ),
                 ],
               );
@@ -197,6 +208,26 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
               icon: _game.sound.muted ? '🔇' : '🔊',
               onTap: _game.toggleMute,
             );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWajchaControl() {
+    return Positioned(
+      bottom: 22,
+      left: 0,
+      right: 0,
+      child: SafeArea(
+        top: false,
+        child: AnimatedBuilder(
+          animation: _game,
+          builder: (context, _) {
+            if (_game.state != GameState.playing || !_game.switchModeActive) {
+              return const SizedBox.shrink();
+            }
+            return Center(child: _WajchaControl(dir: _game.wajchaDir, onSet: _game.setWajcha));
           },
         ),
       ),
@@ -380,6 +411,63 @@ class _RoundButton extends StatelessWidget {
           width: 38,
           height: 38,
           child: Center(child: Text(icon, style: const TextStyle(fontSize: 15))),
+        ),
+      ),
+    );
+  }
+}
+
+class _WajchaControl extends StatelessWidget {
+  const _WajchaControl({required this.dir, required this.onSet});
+
+  final int dir;
+  final void Function(int dir) onSet;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _WajchaHalf(label: '⬅', selected: dir == -1, onTap: () => onSet(-1)),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 6),
+            child: Text('WAJCHA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white38, letterSpacing: 1)),
+          ),
+          _WajchaHalf(label: '➡', selected: dir == 1, onTap: () => onSet(1)),
+        ],
+      ),
+    );
+  }
+}
+
+class _WajchaHalf extends StatelessWidget {
+  const _WajchaHalf({required this.label, required this.selected, required this.onTap});
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? const Color(0xFFFF8A2B) : Colors.white.withValues(alpha: 0.08),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Center(
+            child: Text(label, style: TextStyle(fontSize: 18, color: selected ? const Color(0xFF0A0A10) : Colors.white70)),
+          ),
         ),
       ),
     );

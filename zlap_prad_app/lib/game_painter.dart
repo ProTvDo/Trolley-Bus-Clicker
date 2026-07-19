@@ -60,6 +60,12 @@ class GamePainter extends CustomPainter {
         if (oy < -40 || oy > h + 40) continue;
         _drawObstacle(canvas, game.laneX(ob.lane), oy, ob);
       }
+      if (seg.isSwitch) {
+        final sy = _screenY(seg.dStart);
+        if (sy >= -40 && sy <= h + 40) {
+          _drawSwitchMarker(canvas, game.laneX(seg.fromLane), sy, seg.lane > seg.fromLane);
+        }
+      }
     }
 
     _drawWire(canvas, h);
@@ -143,6 +149,36 @@ class GamePainter extends CustomPainter {
       canvas.drawPath(path, Paint()..color = const Color(0xFFFF8A2B));
       canvas.drawRect(const Rect.fromLTWH(-9, 2, 18, 4), Paint()..color = Colors.white);
     }
+    canvas.restore();
+  }
+
+  void _drawSwitchMarker(Canvas canvas, double x, double y, bool pointsRight) {
+    const amber = Color(0xFFFF8A2B);
+    canvas.save();
+    canvas.translate(x, y);
+    canvas.drawCircle(
+      Offset.zero,
+      13,
+      Paint()
+        ..color = amber.withValues(alpha: 0.5)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+    );
+    canvas.drawCircle(Offset.zero, 9, Paint()..color = const Color(0xFF14141C));
+    canvas.drawCircle(
+      Offset.zero,
+      9,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = amber,
+    );
+    final dir = pointsRight ? 1.0 : -1.0;
+    final arrow = Path()
+      ..moveTo(-4 * dir, -5)
+      ..lineTo(5 * dir, 0)
+      ..lineTo(-4 * dir, 5)
+      ..close();
+    canvas.drawPath(arrow, Paint()..color = amber);
     canvas.restore();
   }
 

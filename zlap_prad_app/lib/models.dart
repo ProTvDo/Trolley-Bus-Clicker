@@ -23,23 +23,42 @@ class TrackSegment {
   final double dEnd;
   final List<TrackObstacle> obstacles;
 
+  /// True if [lane] was chosen by the player's wajcha (see
+  /// GameController.switchModeActive) rather than randomly - drawn with a
+  /// distinct marker so the player can recognise a switch point on sight.
+  final bool isSwitch;
+
   TrackSegment({
     required this.fromLane,
     required this.lane,
     required this.dStart,
     required this.dEnd,
     required this.obstacles,
+    this.isSwitch = false,
   });
 
-  static TrackSegment generate(int fromLane, double dStart, int lanes, int maxJump, Random rng) {
+  static TrackSegment generate(
+    int fromLane,
+    double dStart,
+    int lanes,
+    int maxJump,
+    Random rng, {
+    int? forcedLane,
+    bool isSwitch = false,
+  }) {
     // Lane changes are capped at maxJump lanes away from fromLane - the
     // caller widens the reaction window proportionally to the jump size
     // (see GameController.graceFor), so any jump up to maxJump stays fair.
-    final candidates = [
-      for (var l = 0; l < lanes; l++)
-        if (l != fromLane && (l - fromLane).abs() <= maxJump) l,
-    ];
-    final lane = candidates[rng.nextInt(candidates.length)];
+    int lane;
+    if (forcedLane != null) {
+      lane = forcedLane;
+    } else {
+      final candidates = [
+        for (var l = 0; l < lanes; l++)
+          if (l != fromLane && (l - fromLane).abs() <= maxJump) l,
+      ];
+      lane = candidates[rng.nextInt(candidates.length)];
+    }
     final len = 380 + rng.nextInt(620 - 380 + 1);
     final dEnd = dStart + len;
     final obstacles = <TrackObstacle>[];
@@ -54,7 +73,14 @@ class TrackSegment {
         ));
       }
     }
-    return TrackSegment(fromLane: fromLane, lane: lane, dStart: dStart, dEnd: dEnd, obstacles: obstacles);
+    return TrackSegment(
+      fromLane: fromLane,
+      lane: lane,
+      dStart: dStart,
+      dEnd: dEnd,
+      obstacles: obstacles,
+      isSwitch: isSwitch,
+    );
   }
 }
 

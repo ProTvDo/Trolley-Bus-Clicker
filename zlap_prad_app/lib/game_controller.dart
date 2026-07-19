@@ -30,13 +30,45 @@ class GameController extends ChangeNotifier {
   // Level 2: two-lane jumps introduced, window scales with jump size so
   //          it stays exactly as fair (per-lane) as a level-1 change.
   // Level 3: same jumps, tighter window - a real skill test.
+  // Level 4: zwrotnice (switches) - the wire no longer picks its own
+  //          direction; it forks and follows whichever way the player's
+  //          wajcha (lever) is set to at the moment it's reached.
   int get level {
     if (score < 150) return 1;
     if (score < 450) return 2;
-    return 3;
+    if (score < 800) return 3;
+    return 4;
   }
 
   int get maxJump => level >= 2 ? 2 : 1;
+
+  bool get switchModeActive => level >= 4;
+
+  /// -1 = left, 1 = right. The direction a not-yet-reached switch will
+  /// resolve to; set ahead of time by tapping the on-screen wajcha lever.
+  int wajchaDir = 1;
+
+  void setWajcha(int dir) {
+    if (wajchaDir == dir) return;
+    wajchaDir = dir;
+    notifyListeners();
+  }
+
+  /// Picks the target lane for an upcoming switch segment from the
+  /// player's current wajcha setting - called at generation time (a few
+  /// seconds before the segment is reached), the same lead time the player
+  /// gets to see any other upcoming terrain.
+  int _resolveSwitchTarget(int fromLane) {
+    final maxPossible = fromLane == 1 ? 1 : maxJump; // only edge lanes can jump 2
+    final magnitude = 1 + _rng.nextInt(maxPossible);
+    var dir = wajchaDir;
+    var raw = fromLane + dir * magnitude;
+    if (raw < 0 || raw > lanes - 1) {
+      dir = -dir;
+      raw = fromLane + dir * magnitude;
+    }
+    return raw.clamp(0, lanes - 1);
+  }
 
   double get _graceBase {
     switch (level) {
@@ -117,19 +149,34 @@ class GameController extends ChangeNotifier {
     return (left: left, right: left + roadW);
   }
 
+  TrackSegment _nextSegment(int fromLane, double dStart) {
+    if (switchModeActive) {
+      return TrackSegment.generate(
+        fromLane,
+        dStart,
+        lanes,
+        maxJump,
+        _rng,
+        forcedLane: _resolveSwitchTarget(fromLane),
+        isSwitch: true,
+      );
+    }
+    return TrackSegment.generate(fromLane, dStart, lanes, maxJump, _rng);
+  }
+
   void _resetTrack() {
     segments
       ..clear()
       ..add(TrackSegment(fromLane: 1, lane: 1, dStart: -400, dEnd: 420, obstacles: []));
     while (segments.last.dEnd < 1200) {
-      segments.add(TrackSegment.generate(segments.last.lane, segments.last.dEnd, lanes, maxJump, _rng));
+      segments.add(_nextSegment(segments.last.lane, segments.last.dEnd));
     }
   }
 
   void _ensureTrackAhead() {
     var last = segments.last;
     while (last.dEnd < scrollY + height + 300) {
-      last = TrackSegment.generate(last.lane, last.dEnd, lanes, maxJump, _rng);
+      last = _nextSegment(last.lane, last.dEnd);
       segments.add(last);
     }
     while (segments.length > 4 && segments[1].dEnd < scrollY - height) {
