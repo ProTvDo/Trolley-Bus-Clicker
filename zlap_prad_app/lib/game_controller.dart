@@ -114,7 +114,11 @@ class GameController extends ChangeNotifier {
   }
 
   List<int> _wireValidLanes(TrackSegment seg) {
-    if (scrollY < seg.dStart + grace) return [seg.fromLane, seg.lane];
+    if (scrollY < seg.dStart + grace) {
+      final lo = min(seg.fromLane, seg.lane);
+      final hi = max(seg.fromLane, seg.lane);
+      return [for (var l = lo; l <= hi; l++) l];
+    }
     return [seg.lane];
   }
 
