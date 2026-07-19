@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'audio.dart';
 import 'models.dart';
 
-enum GameState { start, playing, reconnecting, gameOver }
+enum GameState { start, playing, reconnecting, gameOver, stageComplete, countdown }
 
 class GameController extends ChangeNotifier {
   GameController() {
@@ -24,25 +24,41 @@ class GameController extends ChangeNotifier {
   static const maxLives = 3;
   static const tapsNeeded = 3;
   static const reconnectTime = 4.0;
+  static const celebrationDuration = 2.4;
+  static const countdownStepDuration = 0.8;
 
-  // ---- difficulty levels ----
-  // Level 1: only adjacent-lane wire changes, generous reaction window.
-  // Level 2: two-lane jumps introduced, window scales with jump size so
-  //          it stays exactly as fair (per-lane) as a level-1 change.
-  // Level 3: same jumps, tighter window - a real skill test.
-  // Level 4: zwrotnice (switches) - the wire no longer picks its own
-  //          direction; it forks and follows whichever way the player's
-  //          wajcha (lever) is set to at the moment it's reached.
-  int get level {
-    if (score < 150) return 1;
-    if (score < 450) return 2;
-    if (score < 800) return 3;
-    return 4;
+  // ---- stages ----
+  // Each stage ends at a score target; reaching it pauses play for a
+  // celebration (stars = lives remaining) then a countdown before the next,
+  // harder stage begins. Stages go on forever - there's no final one.
+  int stage = 1;
+
+  double _stageTarget(int n) {
+    if (n <= 1) return 150;
+    if (n == 2) return 450;
+    if (n == 3) return 800;
+    return 800 + (n - 3) * 500;
   }
+
+  // ---- difficulty tiers, driven by stage ----
+  // Stage 1: only adjacent-lane wire changes, generous reaction window.
+  // Stage 2: two-lane jumps introduced, window scales with jump size so
+  //          it stays exactly as fair (per-lane) as a stage-1 change.
+  // Stage 3: same jumps, tighter window - a real skill test.
+  // Stage 4+: zwrotnice (switches) - the wire no longer picks its own
+  //          direction; it forks and follows whichever way the player's
+  //          wajcha (lever) is set to at the moment it's reached. Beyond
+  //          stage 4 the mechanics stay the same but speed keeps climbing
+  //          and the reaction window keeps shrinking (down to a floor).
+  int get level => min(4, stage);
 
   int get maxJump => level >= 2 ? 2 : 1;
 
   bool get switchModeActive => level >= 4;
+
+  double get _baseSpeedForStage => baseSpeed + (stage - 1) * 8;
+
+  double get _maxSpeedAddForStage => maxSpeedAdd + (stage - 1) * 12;
 
   /// -1 = left, 1 = right. The direction a not-yet-reached switch will
   /// resolve to; set ahead of time by tapping the on-screen wajcha lever.
@@ -69,14 +85,10 @@ class GameController extends ChangeNotifier {
   }
 
   double get _graceBase {
-    switch (level) {
-      case 1:
-        return 170;
-      case 2:
-        return 150;
-      default:
-        return 120;
-    }
+    if (stage <= 1) return 170;
+    if (stage == 2) return 150;
+    if (stage == 3) return 120;
+    return max(70, 120 - (stage - 3) * 10);
   }
 
   /// Width (in track-distance units) of the transition window for a jump
@@ -104,6 +116,10 @@ class GameController extends ChangeNotifier {
   double alignedTime = 0;
   double mult = 1;
   double flashT = 0;
+
+  double celebrationTimeLeft = 0;
+  int countdownStep = 0;
+  double countdownTimer = 0;
 
   final List<TrackSegment> segments = [];
   final List<Spark> particles = [];
@@ -189,6 +205,7 @@ class GameController extends ChangeNotifier {
   }
 
   void startGame() {
+    stage = 1;
     score = 0;
     lives = maxLives;
     busLane = 1;
@@ -248,6 +265,41 @@ class GameController extends ChangeNotifier {
     }
   }
 
+  /// Called when the score crosses this stage's target. Play pauses for a
+  /// celebration (stars = lives remaining), then a countdown, then the next,
+  /// harder stage begins - see [update].
+  void _completeStage() {
+    state = GameState.stageComplete;
+    celebrationTimeLeft = celebrationDuration;
+    sound.success();
+    HapticFeedback.mediumImpact();
+    for (var i = 0; i < 18; i++) {
+      _spawnSpark(
+        width / 2 + (_rng.nextDouble() * 2 - 1) * width * 0.3,
+        height * 0.4 + (_rng.nextDouble() * 2 - 1) * 60,
+      );
+    }
+  }
+
+  void _beginCountdown() {
+    state = GameState.countdown;
+    countdownStep = 3;
+    countdownTimer = countdownStepDuration;
+  }
+
+  void _startStage() {
+    stage++;
+    busLane = 1;
+    busDrawX = laneX(1);
+    scrollY = 0;
+    speed = _baseSpeedForStage;
+    alignedTime = 0;
+    mult = 1;
+    particles.clear();
+    state = GameState.playing;
+    _resetTrack();
+  }
+
   void moveLane(int dir) {
     if (state != GameState.playing) return;
     busLane = (busLane + dir).clamp(0, lanes - 1);
@@ -265,6 +317,8 @@ class GameController extends ChangeNotifier {
         startGame();
         break;
       case GameState.gameOver:
+      case GameState.stageComplete:
+      case GameState.countdown:
         break;
     }
   }
@@ -291,32 +345,55 @@ class GameController extends ChangeNotifier {
 
   void update(double dt) {
     if (width == 0 || height == 0) return;
-    if (state == GameState.playing) {
-      scrollY += speed * dt;
-      speed = baseSpeed + min(maxSpeedAdd, score * 0.025);
-      _ensureTrackAhead();
+    switch (state) {
+      case GameState.playing:
+        scrollY += speed * dt;
+        speed = _baseSpeedForStage + min(_maxSpeedAddForStage, score * 0.025);
+        _ensureTrackAhead();
 
-      final seg = currentSegment();
-      if (seg.isSwitch && !seg.resolved) {
-        final (hot, dead) = resolveSwitchTargets(seg.fromLane);
-        seg.resolve(hot, dead);
-      }
-      final valid = _wireValidLanes(seg);
-      final aligned = valid.contains(busLane);
-
-      if (aligned) {
-        alignedTime += dt;
-        mult = 1 + min(4, alignedTime * 0.5);
-        score += (14 * mult) * dt;
-        if (_rng.nextDouble() < dt * 14) {
-          _spawnSpark(laneX(busLane), height * busYFrac - 34);
+        final seg = currentSegment();
+        if (seg.isSwitch && !seg.resolved) {
+          final (hot, dead) = resolveSwitchTargets(seg.fromLane);
+          seg.resolve(hot, dead);
         }
-      } else {
-        _triggerDisconnect();
-      }
-    } else if (state == GameState.reconnecting) {
-      reconnectTimeLeft -= dt;
-      if (reconnectTimeLeft <= 0) _loseLife();
+        final valid = _wireValidLanes(seg);
+        final aligned = valid.contains(busLane);
+
+        if (aligned) {
+          alignedTime += dt;
+          mult = 1 + min(4, alignedTime * 0.5);
+          score += (14 * mult) * dt;
+          if (_rng.nextDouble() < dt * 14) {
+            _spawnSpark(laneX(busLane), height * busYFrac - 34);
+          }
+          if (score >= _stageTarget(stage)) _completeStage();
+        } else {
+          _triggerDisconnect();
+        }
+        break;
+      case GameState.reconnecting:
+        reconnectTimeLeft -= dt;
+        if (reconnectTimeLeft <= 0) _loseLife();
+        break;
+      case GameState.stageComplete:
+        celebrationTimeLeft -= dt;
+        if (celebrationTimeLeft <= 0) _beginCountdown();
+        break;
+      case GameState.countdown:
+        countdownTimer -= dt;
+        if (countdownTimer <= 0) {
+          if (countdownStep == 0) {
+            _startStage();
+          } else {
+            countdownStep--;
+            countdownTimer = countdownStepDuration;
+            sound.tap();
+          }
+        }
+        break;
+      case GameState.start:
+      case GameState.gameOver:
+        break;
     }
 
     final targetX = laneX(busLane);

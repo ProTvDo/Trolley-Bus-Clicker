@@ -115,6 +115,20 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                     return _buildGameOverOverlay();
                   },
                 ),
+                AnimatedBuilder(
+                  animation: _game,
+                  builder: (context, _) {
+                    if (_game.state != GameState.stageComplete) return const SizedBox.shrink();
+                    return _buildStageCompleteOverlay();
+                  },
+                ),
+                AnimatedBuilder(
+                  animation: _game,
+                  builder: (context, _) {
+                    if (_game.state != GameState.countdown) return const SizedBox.shrink();
+                    return _buildCountdownOverlay();
+                  },
+                ),
               ],
             );
           },
@@ -183,7 +197,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'poziom ${_game.level}',
+                        'etap ${_game.stage}',
                         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white38),
                       ),
                     ],
@@ -347,6 +361,59 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         ),
         const SizedBox(height: 12),
         _PlayButton(label: 'Jeszcze raz', onTap: _game.startGame),
+      ],
+    );
+  }
+
+  Widget _buildStageCompleteOverlay() {
+    return _Overlay(
+      children: [
+        Text(
+          'Etap ${_game.stage} ukończony!',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white),
+        ),
+        const SizedBox(height: 14),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(GameController.maxLives, (i) {
+            final earned = i < _game.lives;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                earned ? '⭐' : '☆',
+                style: TextStyle(fontSize: 40, color: earned ? neonYellow : Colors.white24),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          'Wynik: ${_game.score.floor()}',
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white70),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCountdownOverlay() {
+    const labels = ['3', '2', '1', 'JEDŹ!'];
+    return _Overlay(
+      children: [
+        Text(
+          'Etap ${_game.stage + 1}',
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white60, letterSpacing: 1),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          labels[3 - _game.countdownStep],
+          style: TextStyle(
+            fontSize: _game.countdownStep == 0 ? 44 : 72,
+            fontWeight: FontWeight.w800,
+            color: neonYellow,
+            shadows: const [Shadow(blurRadius: 18, color: neonYellow)],
+          ),
+        ),
       ],
     );
   }
