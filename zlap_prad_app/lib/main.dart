@@ -23,7 +23,7 @@ class ZlapPradApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Złap Prąd!',
+      title: 'Troley Bus Clicker',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,

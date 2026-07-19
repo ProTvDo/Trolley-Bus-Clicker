@@ -7,7 +7,7 @@ void main() {
     await tester.pumpWidget(const ZlapPradApp());
     await tester.pump();
 
-    expect(find.text('Zagraj'), findsOneWidget);
-    expect(find.textContaining('Złap Prąd'), findsWidgets);
+    expect(find.text('Play'), findsOneWidget);
+    expect(find.textContaining('Troley Bus Clicker'), findsWidgets);
   });
 }

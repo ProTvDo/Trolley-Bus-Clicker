@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
+import 'bus_icon.dart';
 import 'game_controller.dart';
 import 'game_painter.dart';
 import 'main.dart' show kBuildNumber;
@@ -276,30 +277,43 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   Widget _buildStartOverlay() {
     return _Overlay(
       children: [
+        const TrolleybusIcon(size: 72),
+        const SizedBox(height: 14),
         const Text(
-          '⚡ Złap Prąd! ⚡',
-          style: TextStyle(fontSize: 40, fontWeight: FontWeight.w800, color: Colors.white),
+          'Troley Bus Clicker',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: Colors.white),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         const Text(
-          'Prowadź trolejbus pod przewodami trakcyjnymi. Im dłużej jedziesz idealnie pod kablem, tym szybciej rosną punkty!',
+          '⚡ Catch the current! ⚡',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: neonYellow),
+        ),
+        const SizedBox(height: 14),
+        const Text(
+          'Steer the trolleybus under the overhead wire. Stay locked on and your score climbs faster the longer you hold it!',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 14, color: Colors.white70, height: 1.5),
         ),
         const SizedBox(height: 22),
-        _PlayButton(label: 'Zagraj', onTap: _game.startGame),
+        _PlayButton(label: 'Play', onTap: _game.startGame),
         const SizedBox(height: 26),
         const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _HowTo(icon: '👈', label: 'lewa strona ekranu = lewy pas'),
+            _HowTo(icon: '👈', label: 'left side of screen = left lane'),
             SizedBox(width: 18),
-            _HowTo(icon: '👉', label: 'prawa strona ekranu = prawy pas'),
+            _HowTo(icon: '👉', label: 'right side of screen = right lane'),
             SizedBox(width: 18),
-            _HowTo(icon: '🔌', label: 'zgubisz kabel? klikaj szybko!'),
+            _HowTo(icon: '🔌', label: 'lost the wire? tap fast!'),
           ],
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 22),
+        const Text(
+          'Presented by: fb @Trajtekzbroda',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white38),
+        ),
+        const SizedBox(height: 6),
         Text(
           'build $kBuildNumber',
           style: const TextStyle(fontSize: 11, color: Colors.white24, fontWeight: FontWeight.w600),
