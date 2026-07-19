@@ -28,6 +28,11 @@ class TrackSegment {
   /// distinct marker so the player can recognise a switch point on sight.
   final bool isSwitch;
 
+  /// For a switch segment, the other branch of the fork - drawn too (a real
+  /// train switch shows both physical tracks), but it's not live: ending up
+  /// on this lane is exactly as wrong as any other unaligned lane.
+  final int? deadLane;
+
   TrackSegment({
     required this.fromLane,
     required this.lane,
@@ -35,6 +40,7 @@ class TrackSegment {
     required this.dEnd,
     required this.obstacles,
     this.isSwitch = false,
+    this.deadLane,
   });
 
   static TrackSegment generate(
@@ -44,6 +50,7 @@ class TrackSegment {
     int maxJump,
     Random rng, {
     int? forcedLane,
+    int? deadLane,
     bool isSwitch = false,
   }) {
     // Lane changes are capped at maxJump lanes away from fromLane - the
@@ -63,7 +70,7 @@ class TrackSegment {
     final dEnd = dStart + len;
     final obstacles = <TrackObstacle>[];
     for (var l = 0; l < lanes; l++) {
-      if (l == lane) continue;
+      if (l == lane || l == deadLane) continue;
       if (rng.nextDouble() < 0.35) {
         obstacles.add(TrackObstacle(
           lane: l,
@@ -80,6 +87,7 @@ class TrackSegment {
       dEnd: dEnd,
       obstacles: obstacles,
       isSwitch: isSwitch,
+      deadLane: deadLane,
     );
   }
 }

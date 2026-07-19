@@ -54,20 +54,17 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Picks the target lane for an upcoming switch segment from the
-  /// player's current wajcha setting - called at generation time (a few
-  /// seconds before the segment is reached), the same lead time the player
-  /// gets to see any other upcoming terrain.
-  int _resolveSwitchTarget(int fromLane) {
-    final maxPossible = fromLane == 1 ? 1 : maxJump; // only edge lanes can jump 2
-    final magnitude = 1 + _rng.nextInt(maxPossible);
-    var dir = wajchaDir;
-    var raw = fromLane + dir * magnitude;
-    if (raw < 0 || raw > lanes - 1) {
-      dir = -dir;
-      raw = fromLane + dir * magnitude;
-    }
-    return raw.clamp(0, lanes - 1);
+  /// A switch always forks into the two lanes that aren't fromLane (with
+  /// only 3 lanes total, that's always exactly two). wajcha picks which
+  /// one is live: -1 takes the lower-index branch (drawn on the left),
+  /// +1 the higher-index one (drawn on the right) - called at generation
+  /// time, a few seconds before the segment is reached, same lead time the
+  /// player gets to see any other upcoming terrain. Returns (hot, dead):
+  /// hot is the real wire target, dead is the other branch, drawn but not
+  /// live - landing on it disconnects you.
+  (int hot, int dead) _resolveSwitchTargets(int fromLane) {
+    final candidates = [for (var l = 0; l < lanes; l++) if (l != fromLane) l]..sort();
+    return wajchaDir < 0 ? (candidates[0], candidates[1]) : (candidates[1], candidates[0]);
   }
 
   double get _graceBase {
@@ -151,13 +148,15 @@ class GameController extends ChangeNotifier {
 
   TrackSegment _nextSegment(int fromLane, double dStart) {
     if (switchModeActive) {
+      final (hot, dead) = _resolveSwitchTargets(fromLane);
       return TrackSegment.generate(
         fromLane,
         dStart,
         lanes,
         maxJump,
         _rng,
-        forcedLane: _resolveSwitchTarget(fromLane),
+        forcedLane: hot,
+        deadLane: dead,
         isSwitch: true,
       );
     }

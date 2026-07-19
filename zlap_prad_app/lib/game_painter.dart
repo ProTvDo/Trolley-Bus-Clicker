@@ -68,6 +68,7 @@ class GamePainter extends CustomPainter {
       }
     }
 
+    _drawDeadBranches(canvas, h);
     _drawWire(canvas, h);
     _drawParticles(canvas);
     _drawBus(canvas, h);
@@ -180,6 +181,22 @@ class GamePainter extends CustomPainter {
       ..close();
     canvas.drawPath(arrow, Paint()..color = amber);
     canvas.restore();
+  }
+
+  void _drawDeadBranches(Canvas canvas, double h) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..color = const Color(0xFFBFF4FF).withValues(alpha: 0.22);
+    for (final seg in game.segments) {
+      if (seg.deadLane == null) continue;
+      if (seg.dEnd < game.scrollY - 50 || seg.dStart > game.scrollY + h + 50) continue;
+      // The real wire keeps going after the fork; the dead branch doesn't -
+      // it's drawn only through the fork itself, then simply ends.
+      final start = Offset(game.laneX(seg.fromLane), _screenY(seg.dStart));
+      final end = Offset(game.laneX(seg.deadLane!), _screenY(seg.dStart + game.graceFor(seg)));
+      canvas.drawLine(start, end, paint);
+    }
   }
 
   void _drawWire(Canvas canvas, double h) {
