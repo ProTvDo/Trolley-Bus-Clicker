@@ -9,6 +9,18 @@ const neonCyan = Color(0xFF4DEAFF);
 const neonYellow = Color(0xFFFFE14D);
 const neonPink = Color(0xFFFF4DE3);
 
+/// A segment's fromLane/lane/deadLane as they should be drawn this frame -
+/// either the real resolved values, or (for a switch not yet reached) a
+/// live preview from the current wajcha setting.
+class _ResolvedView {
+  _ResolvedView(this.seg, this.fromLane, this.lane, this.deadLane);
+
+  final TrackSegment seg;
+  final int fromLane;
+  final int lane;
+  final int? deadLane;
+}
+
 class GamePainter extends CustomPainter {
   GamePainter(this.game, this.tick) : super(repaint: game);
 
@@ -53,7 +65,27 @@ class GamePainter extends CustomPainter {
       _drawPole(canvas, edges.right + 8, py);
     }
 
+    // For a switch not yet resolved, lane/deadLane are computed here as a
+    // live preview from the current wajcha - not read off the segment,
+    // which only knows the real outcome once it's actually been resolved.
+    // Chained so a second not-yet-reached switch previews from the first
+    // one's own preview, matching how they'll really resolve in order.
+    final resolvedView = <_ResolvedView>[];
+    int? cascadeLane;
     for (final seg in game.segments) {
+      if (seg.isSwitch && !seg.resolved) {
+        final fromLane = cascadeLane ?? seg.fromLane;
+        final (hot, dead) = game.resolveSwitchTargets(fromLane);
+        resolvedView.add(_ResolvedView(seg, fromLane, hot, dead));
+        cascadeLane = hot;
+      } else {
+        resolvedView.add(_ResolvedView(seg, seg.fromLane, seg.lane, seg.deadLane));
+        cascadeLane = null;
+      }
+    }
+
+    for (final rv in resolvedView) {
+      final seg = rv.seg;
       if (seg.dEnd < game.scrollY - 100 || seg.dStart > game.scrollY + h + 100) continue;
       for (final ob in seg.obstacles) {
         final oy = _screenY(ob.d);
@@ -63,13 +95,13 @@ class GamePainter extends CustomPainter {
       if (seg.isSwitch) {
         final sy = _screenY(seg.dStart);
         if (sy >= -40 && sy <= h + 40) {
-          _drawSwitchMarker(canvas, game.laneX(seg.fromLane), sy, seg.lane > seg.fromLane);
+          _drawSwitchMarker(canvas, game.laneX(rv.fromLane), sy, rv.lane > rv.fromLane);
         }
       }
     }
 
-    _drawDeadBranches(canvas, h);
-    _drawWire(canvas, h);
+    _drawDeadBranches(canvas, h, resolvedView);
+    _drawWire(canvas, h, resolvedView);
     _drawParticles(canvas);
     _drawBus(canvas, h);
 
@@ -183,29 +215,29 @@ class GamePainter extends CustomPainter {
     canvas.restore();
   }
 
-  void _drawDeadBranches(Canvas canvas, double h) {
+  void _drawDeadBranches(Canvas canvas, double h, List<_ResolvedView> resolvedView) {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5
       ..color = const Color(0xFFBFF4FF).withValues(alpha: 0.22);
-    for (final seg in game.segments) {
-      if (seg.deadLane == null) continue;
-      if (seg.dEnd < game.scrollY - 50 || seg.dStart > game.scrollY + h + 50) continue;
+    for (final rv in resolvedView) {
+      if (rv.deadLane == null) continue;
+      if (rv.seg.dEnd < game.scrollY - 50 || rv.seg.dStart > game.scrollY + h + 50) continue;
       // The real wire keeps going after the fork; the dead branch doesn't -
       // it's drawn only through the fork itself, then simply ends.
-      final start = Offset(game.laneX(seg.fromLane), _screenY(seg.dStart));
-      final end = Offset(game.laneX(seg.deadLane!), _screenY(seg.dStart + game.graceFor(seg)));
+      final start = Offset(game.laneX(rv.fromLane), _screenY(rv.seg.dStart));
+      final end = Offset(game.laneX(rv.deadLane!), _screenY(rv.seg.dStart + game.graceForJump(rv.fromLane, rv.lane)));
       canvas.drawLine(start, end, paint);
     }
   }
 
-  void _drawWire(Canvas canvas, double h) {
+  void _drawWire(Canvas canvas, double h, List<_ResolvedView> resolvedView) {
     final pts = <Offset>[];
-    for (final seg in game.segments) {
-      if (seg.dEnd < game.scrollY - 50 || seg.dStart > game.scrollY + h + 50) continue;
-      pts.add(Offset(game.laneX(seg.fromLane), _screenY(seg.dStart)));
-      pts.add(Offset(game.laneX(seg.lane), _screenY(seg.dStart + game.graceFor(seg))));
-      pts.add(Offset(game.laneX(seg.lane), _screenY(seg.dEnd)));
+    for (final rv in resolvedView) {
+      if (rv.seg.dEnd < game.scrollY - 50 || rv.seg.dStart > game.scrollY + h + 50) continue;
+      pts.add(Offset(game.laneX(rv.fromLane), _screenY(rv.seg.dStart)));
+      pts.add(Offset(game.laneX(rv.lane), _screenY(rv.seg.dStart + game.graceForJump(rv.fromLane, rv.lane))));
+      pts.add(Offset(game.laneX(rv.lane), _screenY(rv.seg.dEnd)));
     }
     if (pts.length < 2) return;
 

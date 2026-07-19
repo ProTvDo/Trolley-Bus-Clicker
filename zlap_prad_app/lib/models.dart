@@ -17,60 +17,61 @@ class TrackObstacle {
 }
 
 class TrackSegment {
-  final int fromLane;
-  final int lane;
+  /// Predecessor segment, kept only until this one resolves - lets an
+  /// unresolved switch's [fromLane] always reflect the predecessor's real
+  /// (possibly still-changing) target lane instead of a value snapshotted
+  /// too early. Cleared on [resolve] so old segments can be garbage
+  /// collected instead of being held forever by a growing reference chain.
+  TrackSegment? _prevSeg;
+  int? _fromLaneValue;
+
+  int lane;
+  int? deadLane;
+  bool resolved;
   final double dStart;
   final double dEnd;
   final List<TrackObstacle> obstacles;
 
-  /// True if [lane] was chosen by the player's wajcha (see
+  /// True if [lane] is chosen by the player's wajcha (see
   /// GameController.switchModeActive) rather than randomly - drawn with a
-  /// distinct marker so the player can recognise a switch point on sight.
+  /// distinct marker and a second, dead branch line so the player can
+  /// recognise a switch point on sight.
   final bool isSwitch;
 
-  /// For a switch segment, the other branch of the fork - drawn too (a real
-  /// train switch shows both physical tracks), but it's not live: ending up
-  /// on this lane is exactly as wrong as any other unaligned lane.
-  final int? deadLane;
+  int get fromLane => _fromLaneValue ?? _prevSeg!.lane;
 
-  TrackSegment({
-    required this.fromLane,
+  TrackSegment._({
+    TrackSegment? prevSeg,
+    int? fromLaneValue,
     required this.lane,
     required this.dStart,
     required this.dEnd,
     required this.obstacles,
     this.isSwitch = false,
-    this.deadLane,
-  });
+    this.resolved = true,
+  })  : _prevSeg = prevSeg,
+        _fromLaneValue = fromLaneValue;
 
-  static TrackSegment generate(
-    int fromLane,
-    double dStart,
-    int lanes,
-    int maxJump,
-    Random rng, {
-    int? forcedLane,
-    int? deadLane,
-    bool isSwitch = false,
-  }) {
-    // Lane changes are capped at maxJump lanes away from fromLane - the
-    // caller widens the reaction window proportionally to the jump size
-    // (see GameController.graceFor), so any jump up to maxJump stays fair.
-    int lane;
-    if (forcedLane != null) {
-      lane = forcedLane;
-    } else {
-      final candidates = [
-        for (var l = 0; l < lanes; l++)
-          if (l != fromLane && (l - fromLane).abs() <= maxJump) l,
-      ];
-      lane = candidates[rng.nextInt(candidates.length)];
-    }
+  factory TrackSegment.initial({required int lane, required double dStart, required double dEnd}) {
+    return TrackSegment._(fromLaneValue: lane, lane: lane, dStart: dStart, dEnd: dEnd, obstacles: []);
+  }
+
+  /// Regular (non-switch) segment: fully resolved immediately, exactly as
+  /// before. [prev] must already be resolved (true for every segment
+  /// generated while level < 4, which is the only time this is called).
+  static TrackSegment generate(TrackSegment prev, int lanes, int maxJump, Random rng) {
+    final fromLane = prev.lane;
+    final candidates = [
+      for (var l = 0; l < lanes; l++)
+        if (l != fromLane && (l - fromLane).abs() <= maxJump) l,
+    ];
+    final lane = candidates[rng.nextInt(candidates.length)];
     final len = 380 + rng.nextInt(620 - 380 + 1);
+    final dStart = prev.dEnd;
     final dEnd = dStart + len;
     final obstacles = <TrackObstacle>[];
     for (var l = 0; l < lanes; l++) {
-      if (l == lane || l == deadLane) continue;
+      if (l == lane) continue;
       if (rng.nextDouble() < 0.35) {
         obstacles.add(TrackObstacle(
           lane: l,
@@ -80,15 +81,34 @@ class TrackSegment {
         ));
       }
     }
-    return TrackSegment(
-      fromLane: fromLane,
-      lane: lane,
+    return TrackSegment._(fromLaneValue: fromLane, lane: lane, dStart: dStart, dEnd: dEnd, obstacles: obstacles);
+  }
+
+  /// A switch ("zwrotnica"): which lane it forks to is deliberately left
+  /// unresolved at generation time - it's only decided by [resolve], right
+  /// when the player reaches it, from whatever the wajcha is set to *then*.
+  static TrackSegment generateSwitch(TrackSegment prev, Random rng) {
+    final len = 380 + rng.nextInt(620 - 380 + 1);
+    final dStart = prev.dEnd;
+    return TrackSegment._(
+      prevSeg: prev,
+      lane: prev.lane,
       dStart: dStart,
-      dEnd: dEnd,
-      obstacles: obstacles,
-      isSwitch: isSwitch,
-      deadLane: deadLane,
+      dEnd: dStart + len,
+      obstacles: const [],
+      isSwitch: true,
+      resolved: false,
     );
+  }
+
+  /// Locks in the fork outcome. Called exactly once, the moment this
+  /// segment becomes current.
+  void resolve(int hotLane, int deadLaneValue) {
+    _fromLaneValue = fromLane;
+    lane = hotLane;
+    deadLane = deadLaneValue;
+    resolved = true;
+    _prevSeg = null;
   }
 }
 

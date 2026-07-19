@@ -55,14 +55,15 @@ class GameController extends ChangeNotifier {
   }
 
   /// A switch always forks into the two lanes that aren't fromLane (with
-  /// only 3 lanes total, that's always exactly two). wajcha picks which
-  /// one is live: -1 takes the lower-index branch (drawn on the left),
-  /// +1 the higher-index one (drawn on the right) - called at generation
-  /// time, a few seconds before the segment is reached, same lead time the
-  /// player gets to see any other upcoming terrain. Returns (hot, dead):
-  /// hot is the real wire target, dead is the other branch, drawn but not
-  /// live - landing on it disconnects you.
-  (int hot, int dead) _resolveSwitchTargets(int fromLane) {
+  /// only 3 lanes total, that's always exactly two). wajcha picks which one
+  /// is live: -1 takes the lower-index branch (drawn on the left), +1 the
+  /// higher-index one (drawn on the right). Pure and side-effect free, so
+  /// it doubles as a live preview for not-yet-reached switches (see
+  /// GamePainter) - call it again right when the segment becomes current to
+  /// actually lock the outcome in via TrackSegment.resolve. Returns
+  /// (hot, dead): hot is the real wire target, dead is the other branch,
+  /// drawn but not live - landing on it disconnects you.
+  (int hot, int dead) resolveSwitchTargets(int fromLane) {
     final candidates = [for (var l = 0; l < lanes; l++) if (l != fromLane) l]..sort();
     return wajchaDir < 0 ? (candidates[0], candidates[1]) : (candidates[1], candidates[0]);
   }
@@ -78,13 +79,13 @@ class GameController extends ChangeNotifier {
     }
   }
 
-  /// Width (in track-distance units) of the transition window for [seg],
-  /// scaled by how many lanes it crosses so a 2-lane jump gets twice the
-  /// reaction time of a 1-lane change instead of the same tight window.
-  double graceFor(TrackSegment seg) {
-    final jump = max(1, (seg.lane - seg.fromLane).abs());
-    return _graceBase * jump;
-  }
+  /// Width (in track-distance units) of the transition window for a jump
+  /// from [fromLane] to [lane], scaled by how many lanes it crosses so a
+  /// 2-lane jump gets twice the reaction time of a 1-lane change instead of
+  /// the same tight window.
+  double graceForJump(int fromLane, int lane) => _graceBase * max(1, (lane - fromLane).abs());
+
+  double graceFor(TrackSegment seg) => graceForJump(seg.fromLane, seg.lane);
 
   final _rng = Random();
   final sound = SoundEngine();
@@ -146,36 +147,24 @@ class GameController extends ChangeNotifier {
     return (left: left, right: left + roadW);
   }
 
-  TrackSegment _nextSegment(int fromLane, double dStart) {
-    if (switchModeActive) {
-      final (hot, dead) = _resolveSwitchTargets(fromLane);
-      return TrackSegment.generate(
-        fromLane,
-        dStart,
-        lanes,
-        maxJump,
-        _rng,
-        forcedLane: hot,
-        deadLane: dead,
-        isSwitch: true,
-      );
-    }
-    return TrackSegment.generate(fromLane, dStart, lanes, maxJump, _rng);
+  TrackSegment _nextSegment(TrackSegment prev) {
+    if (switchModeActive) return TrackSegment.generateSwitch(prev, _rng);
+    return TrackSegment.generate(prev, lanes, maxJump, _rng);
   }
 
   void _resetTrack() {
     segments
       ..clear()
-      ..add(TrackSegment(fromLane: 1, lane: 1, dStart: -400, dEnd: 420, obstacles: []));
+      ..add(TrackSegment.initial(lane: 1, dStart: -400, dEnd: 420));
     while (segments.last.dEnd < 1200) {
-      segments.add(_nextSegment(segments.last.lane, segments.last.dEnd));
+      segments.add(_nextSegment(segments.last));
     }
   }
 
   void _ensureTrackAhead() {
     var last = segments.last;
     while (last.dEnd < scrollY + height + 300) {
-      last = _nextSegment(last.lane, last.dEnd);
+      last = _nextSegment(last);
       segments.add(last);
     }
     while (segments.length > 4 && segments[1].dEnd < scrollY - height) {
@@ -308,6 +297,10 @@ class GameController extends ChangeNotifier {
       _ensureTrackAhead();
 
       final seg = currentSegment();
+      if (seg.isSwitch && !seg.resolved) {
+        final (hot, dead) = resolveSwitchTargets(seg.fromLane);
+        seg.resolve(hot, dead);
+      }
       final valid = _wireValidLanes(seg);
       final aligned = valid.contains(busLane);
 
