@@ -3,6 +3,10 @@ import 'package:flutter/services.dart';
 
 import 'game_screen.dart';
 
+/// Set via --dart-define=BUILD_NUMBER=... in CI (the Actions run number),
+/// shown on the start screen so it's always obvious which APK is installed.
+const String kBuildNumber = String.fromEnvironment('BUILD_NUMBER', defaultValue: 'dev');
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);

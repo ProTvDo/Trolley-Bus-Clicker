@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import 'game_controller.dart';
 import 'game_painter.dart';
+import 'main.dart' show kBuildNumber;
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -266,6 +267,11 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
             SizedBox(width: 18),
             _HowTo(icon: '🔌', label: 'zgubisz kabel? klikaj szybko!'),
           ],
+        ),
+        const SizedBox(height: 18),
+        Text(
+          'build $kBuildNumber',
+          style: const TextStyle(fontSize: 11, color: Colors.white24, fontWeight: FontWeight.w600),
         ),
       ],
     );
