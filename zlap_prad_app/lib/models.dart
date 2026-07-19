@@ -32,10 +32,14 @@ class TrackSegment {
   });
 
   static TrackSegment generate(int fromLane, double dStart, int lanes, Random rng) {
-    int lane;
-    do {
-      lane = rng.nextInt(lanes);
-    } while (lane == fromLane && lanes > 1);
+    // Only adjacent-lane transitions: with tap-left/tap-right controls, a
+    // two-lane skip needs two precise rapid taps and is not reliably
+    // playable, so the wire is never allowed to jump over a lane.
+    final candidates = [
+      if (fromLane - 1 >= 0) fromLane - 1,
+      if (fromLane + 1 < lanes) fromLane + 1,
+    ];
+    final lane = candidates[rng.nextInt(candidates.length)];
     final len = 380 + rng.nextInt(620 - 380 + 1);
     final dEnd = dStart + len;
     final obstacles = <TrackObstacle>[];
