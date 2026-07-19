@@ -19,12 +19,12 @@ class GameController extends ChangeNotifier {
   static const lanes = 3;
   static const roadFrac = 0.7;
   static const busYFrac = 0.78;
-  static const grace = 70.0;
-  static const baseSpeed = 230.0;
-  static const maxSpeedAdd = 260.0;
+  static const grace = 150.0;
+  static const baseSpeed = 180.0;
+  static const maxSpeedAdd = 160.0;
   static const maxLives = 3;
-  static const tapsNeeded = 5;
-  static const reconnectTime = 3.0;
+  static const tapsNeeded = 3;
+  static const reconnectTime = 4.0;
 
   final _rng = Random();
   final sound = SoundEngine();
@@ -223,7 +223,7 @@ class GameController extends ChangeNotifier {
     if (width == 0 || height == 0) return;
     if (state == GameState.playing) {
       scrollY += speed * dt;
-      speed = baseSpeed + min(maxSpeedAdd, score * 0.045);
+      speed = baseSpeed + min(maxSpeedAdd, score * 0.025);
       _ensureTrackAhead();
 
       final seg = currentSegment();

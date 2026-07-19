@@ -36,12 +36,12 @@ class TrackSegment {
     do {
       lane = rng.nextInt(lanes);
     } while (lane == fromLane && lanes > 1);
-    final len = 230 + rng.nextInt(430 - 230 + 1);
+    final len = 380 + rng.nextInt(620 - 380 + 1);
     final dEnd = dStart + len;
     final obstacles = <TrackObstacle>[];
     for (var l = 0; l < lanes; l++) {
       if (l == lane) continue;
-      if (rng.nextDouble() < 0.55) {
+      if (rng.nextDouble() < 0.35) {
         obstacles.add(TrackObstacle(
           lane: l,
           d: dStart + len * (0.25 + rng.nextDouble() * 0.5),
