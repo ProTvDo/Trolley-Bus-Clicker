@@ -92,8 +92,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                   ],
                 ),
                 _buildHud(),
+                _buildDestinationSign(),
                 _buildMuteButton(),
                 _buildWajchaControl(),
+                _buildStopFlash(),
                 AnimatedBuilder(
                   animation: _game,
                   builder: (context, _) {
@@ -187,17 +189,17 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         children: List.generate(GameController.maxLives, (i) {
                           final lost = i >= _game.lives;
                           return Padding(
-                            padding: const EdgeInsets.only(left: 6),
+                            padding: const EdgeInsets.only(left: 4),
                             child: Opacity(
                               opacity: lost ? 0.25 : 1,
-                              child: const Text('🦺', style: TextStyle(fontSize: 22)),
+                              child: const Text('🦺', style: TextStyle(fontSize: 18)),
                             ),
                           );
                         }),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'etap ${_game.stage}',
+                        'etap ${_game.stage} · przystanek ${_game.stopsPassed}/${_game.stopsNeeded}',
                         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white38),
                       ),
                     ],
@@ -205,6 +207,31 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 ],
               );
             },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDestinationSign() {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: SafeArea(
+        child: Center(
+          child: Container(
+            margin: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF14141C).withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: neonYellow.withValues(alpha: 0.4)),
+            ),
+            child: const Text(
+              '🚎 GDYNIA',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: neonYellow, letterSpacing: 1.5),
+            ),
           ),
         ),
       ),
@@ -222,6 +249,40 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
             return _RoundButton(
               icon: _game.sound.muted ? '🔇' : '🔊',
               onTap: _game.toggleMute,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStopFlash() {
+    return Positioned(
+      top: 90,
+      left: 0,
+      right: 0,
+      child: IgnorePointer(
+        child: AnimatedBuilder(
+          animation: _game,
+          builder: (context, _) {
+            if (_game.stopFlashT <= 0 || _game.state != GameState.playing) return const SizedBox.shrink();
+            final opacity = (_game.stopFlashT / 0.9).clamp(0.0, 1.0);
+            return Center(
+              child: Opacity(
+                opacity: opacity,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: neonYellow.withValues(alpha: 0.6)),
+                  ),
+                  child: Text(
+                    '🚏 Przystanek ${_game.stopsPassed}/${_game.stopsNeeded}',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: neonYellow),
+                  ),
+                ),
+              ),
             );
           },
         ),
@@ -294,7 +355,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         const TrolleybusIcon(size: 72),
         const SizedBox(height: 14),
         const Text(
-          'Troley Bus Clicker',
+          'Troley Bus Driver',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: Colors.white),
         ),

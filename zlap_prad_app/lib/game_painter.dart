@@ -43,10 +43,12 @@ class GamePainter extends CustomPainter {
       ).createShader(Rect.fromLTWH(0, 0, w, h));
     canvas.drawRect(Rect.fromLTWH(0, 0, w, h), sky);
 
-    _drawStars(canvas, w, h);
-    _drawSkyline(canvas, w, h);
-
     final edges = game.roadEdges();
+
+    _drawStars(canvas, w, h);
+    _drawSkyline(canvas, w, h, edges);
+    _drawBeach(canvas, w, h, edges);
+
     canvas.drawRect(
       Rect.fromLTRB(edges.left, 0, edges.right, h),
       Paint()..color = const Color(0xFF232030),
@@ -63,6 +65,12 @@ class GamePainter extends CustomPainter {
       final py = _screenY(pd);
       _drawPole(canvas, edges.left - 8, py);
       _drawPole(canvas, edges.right + 8, py);
+    }
+
+    for (var i = 0; i < game.stopPositions.length; i++) {
+      final sy = _screenY(game.stopPositions[i]);
+      if (sy < -50 || sy > h + 50) continue;
+      _drawStopMarker(canvas, edges.left - 20, sy, passed: i < game.stopsPassed);
     }
 
     // For a switch not yet resolved, lane/deadLane are computed here as a
@@ -124,16 +132,48 @@ class GamePainter extends CustomPainter {
     }
   }
 
-  void _drawSkyline(Canvas canvas, double w, double h) {
+  // Left of the road is Gdynia's downtown skyline; right of it is the
+  // seafront (Bulwar Nadmorski) - see _drawBeach.
+  void _drawSkyline(Canvas canvas, double w, double h, ({double left, double right}) edges) {
     final paint = Paint()..color = const Color(0xFF140E1C).withValues(alpha: 0.55);
     final skylineOffset = (game.scrollY * 0.15) % 80;
     for (var bx = -80.0; bx < w + 80; bx += 80) {
+      final x = bx - (skylineOffset % 80);
+      if (x + 56 > edges.left) continue;
       final bh = 60 + (((bx + skylineOffset) / 80).floor() * 37) % 90;
       canvas.drawRect(
-        Rect.fromLTWH(bx - (skylineOffset % 80), h * 0.42 - bh, 56, bh.toDouble()),
+        Rect.fromLTWH(x, h * 0.42 - bh, 56, bh.toDouble()),
         paint,
       );
     }
+  }
+
+  void _drawBeach(Canvas canvas, double w, double h, ({double left, double right}) edges) {
+    if (edges.right >= w) return;
+    final seaTop = h * 0.42;
+    final seaRect = Rect.fromLTWH(edges.right, seaTop, w - edges.right, h - seaTop);
+    canvas.drawRect(
+      seaRect,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF0F3A52), Color(0xFF13566F), Color(0xFF1C7A8C)],
+        ).createShader(seaRect),
+    );
+
+    final wavePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.12)
+      ..strokeWidth = 1.5;
+    final waveOffset = (game.scrollY * 0.2) % 40;
+    for (var wy = seaTop + 10 - waveOffset; wy < h; wy += 40) {
+      canvas.drawLine(Offset(edges.right + 6, wy), Offset(w, wy), wavePaint);
+    }
+
+    canvas.drawRect(
+      Rect.fromLTWH(edges.right, seaTop - 4, min(26, w - edges.right), h - seaTop + 4),
+      Paint()..color = const Color(0xFFCBB07A).withValues(alpha: 0.35),
+    );
   }
 
   void _drawLaneDashes(Canvas canvas, ({double left, double right}) edges, double h) {
@@ -159,6 +199,43 @@ class GamePainter extends CustomPainter {
         ..color = Colors.white.withValues(alpha: 0.25)
         ..strokeWidth = 4,
     );
+  }
+
+  void _drawStopMarker(Canvas canvas, double x, double y, {required bool passed}) {
+    final color = passed ? Colors.white24 : neonYellow;
+    canvas.save();
+    canvas.translate(x, y);
+    canvas.drawLine(
+      const Offset(0, 16),
+      const Offset(0, -14),
+      Paint()
+        ..color = color
+        ..strokeWidth = 3,
+    );
+    final signRect = const Rect.fromLTWH(-16, -34, 32, 22);
+    final signRRect = RRect.fromRectAndRadius(signRect, const Radius.circular(4));
+    if (!passed) {
+      canvas.drawRRect(
+        signRRect,
+        Paint()
+          ..color = neonYellow.withValues(alpha: 0.45)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+      );
+    }
+    canvas.drawRRect(signRRect, Paint()..color = const Color(0xFF14141C));
+    canvas.drawRRect(
+      signRRect,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..color = color,
+    );
+    final tp = TextPainter(
+      text: TextSpan(text: '🚏', style: TextStyle(fontSize: 15, color: color)),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, Offset(-tp.width / 2, -34 + (22 - tp.height) / 2));
+    canvas.restore();
   }
 
   void _drawObstacle(Canvas canvas, double x, double y, TrackObstacle ob) {

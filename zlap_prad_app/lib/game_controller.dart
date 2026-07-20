@@ -21,23 +21,33 @@ class GameController extends ChangeNotifier {
   static const busYFrac = 0.78;
   static const baseSpeed = 180.0;
   static const maxSpeedAdd = 160.0;
-  static const maxLives = 3;
+  static const maxLives = 5;
   static const tapsNeeded = 3;
   static const reconnectTime = 4.0;
   static const celebrationDuration = 2.4;
   static const countdownStepDuration = 0.8;
 
   // ---- stages ----
-  // Each stage ends at a score target; reaching it pauses play for a
-  // celebration (stars = lives remaining) then a countdown before the next,
-  // harder stage begins. Stages go on forever - there's no final one.
+  // A stage is a route with a number of bus stops (przystanki) to reach;
+  // clearing the last one pauses play for a celebration (stars = lives
+  // remaining) then a countdown before the next, longer and harder stage
+  // begins. Stages go on forever - there's no final one.
   int stage = 1;
 
-  double _stageTarget(int n) {
-    if (n <= 1) return 150;
-    if (n == 2) return 450;
-    if (n == 3) return 800;
-    return 800 + (n - 3) * 500;
+  int _stopsForStage(int n) => 2 + n;
+
+  double _stopSpacingForStage(int n) => 650 + n * 40;
+
+  int stopsNeeded = 0;
+  int stopsPassed = 0;
+  List<double> stopPositions = const [];
+  double stopFlashT = 0;
+
+  void _setupStops() {
+    final spacing = _stopSpacingForStage(stage);
+    stopsNeeded = _stopsForStage(stage);
+    stopsPassed = 0;
+    stopPositions = [for (var i = 1; i <= stopsNeeded; i++) i * spacing];
   }
 
   // ---- difficulty tiers, driven by stage ----
@@ -217,6 +227,7 @@ class GameController extends ChangeNotifier {
     particles.clear();
     state = GameState.playing;
     _resetTrack();
+    _setupStops();
     notifyListeners();
   }
 
@@ -265,9 +276,9 @@ class GameController extends ChangeNotifier {
     }
   }
 
-  /// Called when the score crosses this stage's target. Play pauses for a
-  /// celebration (stars = lives remaining), then a countdown, then the next,
-  /// harder stage begins - see [update].
+  /// Called when the last stop of this stage's route is reached. Play
+  /// pauses for a celebration (stars = lives remaining), then a countdown,
+  /// then the next, longer and harder stage begins - see [update].
   void _completeStage() {
     state = GameState.stageComplete;
     celebrationTimeLeft = celebrationDuration;
@@ -298,6 +309,7 @@ class GameController extends ChangeNotifier {
     particles.clear();
     state = GameState.playing;
     _resetTrack();
+    _setupStops();
   }
 
   void moveLane(int dir) {
@@ -351,6 +363,18 @@ class GameController extends ChangeNotifier {
         speed = _baseSpeedForStage + min(_maxSpeedAddForStage, score * 0.025);
         _ensureTrackAhead();
 
+        if (stopFlashT > 0) stopFlashT = max(0, stopFlashT - dt);
+        if (stopsPassed < stopPositions.length && scrollY >= stopPositions[stopsPassed]) {
+          stopsPassed++;
+          stopFlashT = 0.9;
+          sound.tap();
+          HapticFeedback.lightImpact();
+          if (stopsPassed >= stopsNeeded) {
+            _completeStage();
+            break;
+          }
+        }
+
         final seg = currentSegment();
         if (seg.isSwitch && !seg.resolved) {
           final (hot, dead) = resolveSwitchTargets(seg.fromLane);
@@ -366,7 +390,6 @@ class GameController extends ChangeNotifier {
           if (_rng.nextDouble() < dt * 14) {
             _spawnSpark(laneX(busLane), height * busYFrac - 34);
           }
-          if (score >= _stageTarget(stage)) _completeStage();
         } else {
           _triggerDisconnect();
         }

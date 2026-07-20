@@ -8,6 +8,6 @@ void main() {
     await tester.pump();
 
     expect(find.text('Play'), findsOneWidget);
-    expect(find.textContaining('Troley Bus Clicker'), findsWidgets);
+    expect(find.textContaining('Troley Bus Driver'), findsWidgets);
   });
 }
