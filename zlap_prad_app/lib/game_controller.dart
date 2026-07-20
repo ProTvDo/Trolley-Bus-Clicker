@@ -145,15 +145,48 @@ class GameController extends ChangeNotifier {
   int reconnectTapsLeft = tapsNeeded;
   double reconnectTimeLeft = reconnectTime;
 
+  static const maxLeaderboardEntries = 10;
+  List<LeaderboardEntry> leaderboard = [];
+  String driverName = '';
+  bool scoreSaved = false;
+
   Future<void> _loadBest() async {
     final prefs = await SharedPreferences.getInstance();
     best = prefs.getInt('zlapprad_best') ?? 0;
+    driverName = prefs.getString('zlapprad_driver_name') ?? '';
+    leaderboard = (prefs.getStringList('zlapprad_leaderboard') ?? [])
+        .map(LeaderboardEntry.decode)
+        .whereType<LeaderboardEntry>()
+        .toList()
+      ..sort((a, b) => b.score.compareTo(a.score));
     notifyListeners();
   }
 
   Future<void> _saveBest() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('zlapprad_best', best);
+  }
+
+  void setDriverName(String name) {
+    driverName = name;
+  }
+
+  /// Adds the just-finished run to the top-10 leaderboard under the current
+  /// [driverName] (once per run - see [scoreSaved]) and remembers the name
+  /// for next time.
+  Future<void> saveScoreToLeaderboard() async {
+    if (scoreSaved) return;
+    scoreSaved = true;
+    final name = driverName.trim().isEmpty ? 'Kierowca' : driverName.trim();
+    leaderboard = [...leaderboard, LeaderboardEntry(name: name, score: score.floor())]
+      ..sort((a, b) => b.score.compareTo(a.score));
+    if (leaderboard.length > maxLeaderboardEntries) {
+      leaderboard = leaderboard.sublist(0, maxLeaderboardEntries);
+    }
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('zlapprad_driver_name', name);
+    await prefs.setStringList('zlapprad_leaderboard', leaderboard.map((e) => e.encode()).toList());
   }
 
   void resize(double w, double h) {
@@ -217,6 +250,7 @@ class GameController extends ChangeNotifier {
   void startGame() {
     stage = 1;
     score = 0;
+    scoreSaved = false;
     lives = maxLives;
     busLane = 1;
     busDrawX = laneX(1);
@@ -274,6 +308,23 @@ class GameController extends ChangeNotifier {
       best = score.floor();
       _saveBest();
     }
+  }
+
+  /// Player-initiated exit back to the start screen (the in-game quit
+  /// button), as opposed to [_endGame] which fires when lives run out.
+  void quitToStart() {
+    if (state != GameState.playing &&
+        state != GameState.reconnecting &&
+        state != GameState.stageComplete &&
+        state != GameState.countdown) {
+      return;
+    }
+    if (score > best) {
+      best = score.floor();
+      _saveBest();
+    }
+    state = GameState.start;
+    notifyListeners();
   }
 
   /// Called when the last stop of this stage's route is reached. Play

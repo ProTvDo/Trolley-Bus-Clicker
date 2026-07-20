@@ -18,6 +18,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   late final GameController _game = GameController();
   late final Ticker _ticker;
   final FocusNode _focusNode = FocusNode();
+  final TextEditingController _nameController = TextEditingController();
+  bool _nameControllerSynced = false;
+  bool _showLeaderboard = false;
   Duration _lastElapsed = Duration.zero;
   double _tick = 0;
 
@@ -40,6 +43,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     _ticker.dispose();
     _game.dispose();
     _focusNode.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
@@ -94,6 +98,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 _buildHud(),
                 _buildDestinationSign(),
                 _buildMuteButton(),
+                _buildQuitButton(),
                 _buildWajchaControl(),
                 _buildStopFlash(),
                 AnimatedBuilder(
@@ -106,8 +111,15 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 AnimatedBuilder(
                   animation: _game,
                   builder: (context, _) {
-                    if (_game.state != GameState.start) return const SizedBox.shrink();
+                    if (_game.state != GameState.start || _showLeaderboard) return const SizedBox.shrink();
                     return _buildStartOverlay();
+                  },
+                ),
+                AnimatedBuilder(
+                  animation: _game,
+                  builder: (context, _) {
+                    if (_game.state != GameState.start || !_showLeaderboard) return const SizedBox.shrink();
+                    return _buildLeaderboardOverlay();
                   },
                 ),
                 AnimatedBuilder(
@@ -240,7 +252,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
   Widget _buildMuteButton() {
     return Positioned(
-      top: 10,
+      top: 56,
       right: 14,
       child: SafeArea(
         child: AnimatedBuilder(
@@ -254,6 +266,53 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         ),
       ),
     );
+  }
+
+  Widget _buildQuitButton() {
+    return Positioned(
+      top: 10,
+      right: 14,
+      child: SafeArea(
+        child: AnimatedBuilder(
+          animation: _game,
+          builder: (context, _) {
+            const active = {
+              GameState.playing,
+              GameState.reconnecting,
+              GameState.stageComplete,
+              GameState.countdown,
+            };
+            if (!active.contains(_game.state)) return const SizedBox.shrink();
+            return _RoundButton(icon: '✕', onTap: () => _confirmQuit(context));
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmQuit(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF14141C),
+        title: const Text('Zakończyć grę?', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Wrócisz do menu startowego. Bieżąca trasa zostanie przerwana.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Anuluj'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Zakończ'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) _game.quitToStart();
   }
 
   Widget _buildStopFlash() {
@@ -372,7 +431,15 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         ),
         const SizedBox(height: 22),
         _PlayButton(label: 'Play', onTap: _game.startGame),
-        const SizedBox(height: 26),
+        const SizedBox(height: 14),
+        TextButton(
+          onPressed: () => setState(() => _showLeaderboard = true),
+          child: const Text(
+            '🏆 Najlepsi kierowcy',
+            style: TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+        ),
+        const SizedBox(height: 12),
         const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -398,6 +465,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildGameOverOverlay() {
+    if (!_nameControllerSynced && _game.driverName.isNotEmpty) {
+      _nameController.text = _game.driverName;
+      _nameControllerSynced = true;
+    }
     return _Overlay(
       children: [
         const Text(
@@ -420,8 +491,115 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
+        if (_game.scoreSaved)
+          const Text(
+            '✓ Zapisano do rankingu',
+            style: TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
+          )
+        else ...[
+          SizedBox(
+            width: 220,
+            child: TextField(
+              controller: _nameController,
+              maxLength: 16,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+              onChanged: _game.setDriverName,
+              decoration: InputDecoration(
+                counterText: '',
+                isDense: true,
+                hintText: 'Ksywka kierowcy',
+                hintStyle: const TextStyle(color: Colors.white38),
+                filled: true,
+                fillColor: Colors.white.withValues(alpha: 0.08),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(999),
+              onTap: () {
+                _game.setDriverName(_nameController.text);
+                _game.saveScoreToLeaderboard();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                decoration: BoxDecoration(
+                  color: neonCyan.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: neonCyan),
+                ),
+                child: const Text(
+                  'Zapisz do rankingu',
+                  style: TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
         _PlayButton(label: 'Jeszcze raz', onTap: _game.startGame),
+      ],
+    );
+  }
+
+  Widget _buildLeaderboardOverlay() {
+    final entries = _game.leaderboard;
+    return _Overlay(
+      children: [
+        const Text(
+          '🏆 Najlepsi kierowcy',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white),
+        ),
+        const SizedBox(height: 16),
+        if (entries.isEmpty)
+          const Text(
+            'Brak wyników - zagraj pierwszy!',
+            style: TextStyle(color: Colors.white60, fontSize: 13),
+          )
+        else
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 320, minWidth: 240),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  for (var i = 0; i < entries.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 26,
+                            child: Text(
+                              '${i + 1}.',
+                              style: const TextStyle(color: Colors.white38, fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              entries[i].name,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+                            ),
+                          ),
+                          Text(
+                            '${entries[i].score}',
+                            style: const TextStyle(color: neonYellow, fontWeight: FontWeight.w800, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        const SizedBox(height: 20),
+        _PlayButton(label: 'Wróć', onTap: () => setState(() => _showLeaderboard = false)),
       ],
     );
   }
@@ -488,7 +666,6 @@ class _Overlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      alignment: Alignment.center,
       decoration: const BoxDecoration(
         gradient: RadialGradient(
           center: Alignment(0, -0.4),
@@ -496,11 +673,22 @@ class _Overlay extends StatelessWidget {
           colors: [Color(0xD8281438), Color(0xF206060C)],
         ),
       ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: children,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: children,
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

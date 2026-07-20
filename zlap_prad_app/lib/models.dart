@@ -140,3 +140,20 @@ class Star {
 
   Star({required this.x, required this.y, required this.r, required this.tw});
 }
+
+class LeaderboardEntry {
+  final String name;
+  final int score;
+
+  LeaderboardEntry({required this.name, required this.score});
+
+  String encode() => '${name.replaceAll('|', ' ')}|$score';
+
+  static LeaderboardEntry? decode(String raw) {
+    final i = raw.lastIndexOf('|');
+    if (i < 0) return null;
+    final score = int.tryParse(raw.substring(i + 1));
+    if (score == null) return null;
+    return LeaderboardEntry(name: raw.substring(0, i), score: score);
+  }
+}
