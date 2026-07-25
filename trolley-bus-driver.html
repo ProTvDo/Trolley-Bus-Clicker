@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<title>Złap Prąd! — gra o trolejbusie | ProTVDO</title>
-<meta name="description" content="Złap Prąd! — prosta gra zręcznościowa. Prowadź trolejbus pod przewodami trakcyjnymi i zbieraj punkty." />
+<title>Trolley Bus Driver — gra o trolejbusie | ProTVDO</title>
+<meta name="description" content="Trolley Bus Driver — prosta gra zręcznościowa. Prowadź trolejbus pod przewodami trakcyjnymi i zbieraj punkty." />
 <meta name="robots" content="noindex, follow" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -132,7 +132,7 @@
   </div>
 
   <div id="startScreen" class="overlay">
-    <div class="title">⚡ Złap Prąd! ⚡</div>
+    <div class="title">⚡ Trolley Bus Driver ⚡</div>
     <div class="subtitle">Prowadź trolejbus pod przewodami trakcyjnymi. Im dłużej jedziesz idealnie pod kablem, tym szybciej rosną punkty!</div>
     <button class="play-btn" id="playBtn">Zagraj</button>
     <div class="howto">
@@ -246,7 +246,7 @@ var reconnectTimeLeft = RECONNECT_TIME;
 var flashT = 0;
 var stars = [];
 
-try{ best = parseInt(localStorage.getItem('zlapprad_best')||'0',10) || 0; }catch(e){ best = 0; }
+try{ best = parseInt(localStorage.getItem('trolleybusdriver_best')||'0',10) || 0; }catch(e){ best = 0; }
 
 function initStars(){
   stars = [];
@@ -386,7 +386,7 @@ function endGame(){
   sndGameOver();
   if(score>best){
     best = Math.floor(score);
-    try{ localStorage.setItem('zlapprad_best', String(best)); }catch(e){}
+    try{ localStorage.setItem('trolleybusdriver_best', String(best)); }catch(e){}
   }
   document.getElementById('finalScore').textContent = Math.floor(score);
   document.getElementById('bestScore').textContent = best;
