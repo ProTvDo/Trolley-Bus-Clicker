@@ -12,13 +12,55 @@ class SoundEngine {
     for (var i = 0; i < _poolSize; i++) {
       _players.add(AudioPlayer()..setReleaseMode(ReleaseMode.stop));
     }
+    _musicPlayer = AudioPlayer()..setReleaseMode(ReleaseMode.loop);
   }
 
   static const _sampleRate = 22050;
   static const _poolSize = 4;
   final List<AudioPlayer> _players = [];
   int _next = 0;
-  bool muted = false;
+  bool _muted = false;
+  bool get muted => _muted;
+  set muted(bool value) {
+    _muted = value;
+    _musicPlayer.setVolume(value ? 0 : 1);
+  }
+
+  late final AudioPlayer _musicPlayer;
+  Uint8List? _musicBytes;
+
+  /// A short looping chiptune riff (single square-wave voice, no bundled
+  /// asset) - starts once when the game screen opens and just keeps
+  /// playing underneath menus and gameplay alike.
+  static const _musicNotes = <(double freq, double dur)>[
+    (164.81, 0.18), (164.81, 0.18), (196.00, 0.18), (246.94, 0.18),
+    (329.63, 0.18), (246.94, 0.18), (196.00, 0.18), (293.66, 0.18),
+    (164.81, 0.18), (164.81, 0.18), (220.00, 0.18), (246.94, 0.18),
+    (293.66, 0.18), (246.94, 0.18), (220.00, 0.18), (196.00, 0.18),
+  ];
+
+  Uint8List _buildMusicLoop() {
+    final samples = <int>[];
+    for (final (freq, dur) in _musicNotes) {
+      final n = (dur * _sampleRate).round();
+      for (var i = 0; i < n; i++) {
+        final t = i / _sampleRate;
+        final raw = sin(2 * pi * freq * t) >= 0 ? 1.0 : -1.0;
+        final progress = n <= 1 ? 0.0 : i / (n - 1);
+        final attack = min(1.0, i / (0.01 * _sampleRate));
+        final decay = pow(1 - progress, 2).toDouble();
+        final env = min(attack, decay);
+        samples.add((raw * 0.35 * env * 32767).clamp(-32768, 32767).toInt());
+      }
+    }
+    return _wrapWav(Int16List.fromList(samples));
+  }
+
+  Future<void> startMusic() async {
+    _musicBytes ??= _buildMusicLoop();
+    await _musicPlayer.play(BytesSource(_musicBytes!, mimeType: 'audio/wav'));
+    if (_muted) await _musicPlayer.setVolume(0);
+  }
 
   Future<void> _playBytes(Uint8List bytes) async {
     if (muted) return;
@@ -125,5 +167,6 @@ class SoundEngine {
     for (final p in _players) {
       p.dispose();
     }
+    _musicPlayer.dispose();
   }
 }

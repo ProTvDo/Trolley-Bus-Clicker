@@ -13,6 +13,7 @@ class GameController extends ChangeNotifier {
   GameController() {
     _loadBest();
     _resetTrack();
+    sound.startMusic();
   }
 
   // ---- tunables (mirrors the original web game) ----
