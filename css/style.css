@@ -600,6 +600,7 @@ a   { color:inherit; }
   content: '';
   position: absolute;
   inset: 0;
+  pointer-events: none;
   background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255,42,56,0.07), transparent);
   opacity: 0;
   transition: var(--transition);
@@ -707,6 +708,64 @@ a   { color:inherit; }
 }
 .card-link i { transition:var(--transition); }
 .card-link:hover i { transform:translateX(4px); }
+
+/* Rozciąga obszar klikalny linku na całą kartę (nowoczesny "clickable card") */
+.card-link--stretched::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+/* --- Plakietka pobierania z Google Play --- */
+.play-store-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 22px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.play-store-box::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,42,56,0.15), transparent 60%);
+  opacity: 0;
+  transition: var(--transition);
+}
+.play-store-box:hover {
+  border-color: rgba(255,42,56,0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(255,42,56,0.18);
+}
+.play-store-box:hover::before { opacity: 1; }
+.play-store-icon {
+  font-size: 2rem;
+  color: #01875f;
+  flex-shrink: 0;
+  z-index: 1;
+}
+.play-store-text { z-index: 1; }
+.play-store-text small {
+  display: block;
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.play-store-text strong {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
 
 /* --- 10b. BENTO HERO CARD (Strony WWW) --- */
 .bento-hero-card {
