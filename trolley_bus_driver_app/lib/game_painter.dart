@@ -241,6 +241,16 @@ class GamePainter extends CustomPainter {
   void _drawObstacle(Canvas canvas, double x, double y, TrackObstacle ob) {
     canvas.save();
     canvas.translate(x, y);
+    if (ob.isHazard) {
+      final pulse = 0.5 + 0.5 * sin(tick * 0.006);
+      canvas.drawCircle(
+        Offset.zero,
+        26 + pulse * 4,
+        Paint()
+          ..color = const Color(0xFFFF3B3B).withValues(alpha: 0.25 + pulse * 0.2)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+      );
+    }
     if (ob.kind == ObstacleKind.car) {
       final color = ob.blue ? const Color(0xFF3D6BD6) : const Color(0xFFC94B4B);
       canvas.drawRRect(

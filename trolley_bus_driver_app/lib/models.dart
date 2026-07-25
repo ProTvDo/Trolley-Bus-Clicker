@@ -8,11 +8,22 @@ class TrackObstacle {
   final bool blue;
   final ObstacleKind kind;
 
+  /// True only for obstacles placed on a switch branch to force wajcha use
+  /// (see TrackSegment.generateSwitch) - decorative obstacles from
+  /// TrackSegment.generate never set this and are never hit-tested.
+  final bool isHazard;
+
+  /// Set once GameController's collision check fires for this obstacle, so
+  /// a single crash can't cost more than one life while the bus lingers in
+  /// its distance window.
+  bool hit = false;
+
   TrackObstacle({
     required this.lane,
     required this.d,
     required this.blue,
     required this.kind,
+    this.isHazard = false,
   });
 }
 
@@ -87,15 +98,33 @@ class TrackSegment {
   /// A switch ("zwrotnica"): which lane it forks to is deliberately left
   /// unresolved at generation time - it's only decided by [resolve], right
   /// when the player reaches it, from whatever the wajcha is set to *then*.
-  static TrackSegment generateSwitch(TrackSegment prev, Random rng) {
+  ///
+  /// With probability [hazardChance] one of the two branches this switch
+  /// could fork to gets a parked car: whichever branch the wajcha is
+  /// pointed at when this segment resolves is the one the wire - and the
+  /// bus, if it stays connected - actually follows, so a hazard left
+  /// un-dodged isn't just a visual, it's a forced hit.
+  static TrackSegment generateSwitch(TrackSegment prev, Random rng, {required int lanes, double hazardChance = 0}) {
     final len = 380 + rng.nextInt(620 - 380 + 1);
     final dStart = prev.dEnd;
+    final obstacles = <TrackObstacle>[];
+    if (rng.nextDouble() < hazardChance) {
+      final candidates = [for (var l = 0; l < lanes; l++) if (l != prev.lane) l];
+      final blockedLane = candidates[rng.nextInt(candidates.length)];
+      obstacles.add(TrackObstacle(
+        lane: blockedLane,
+        d: dStart + len * (0.35 + rng.nextDouble() * 0.3),
+        blue: rng.nextDouble() < 0.5,
+        kind: ObstacleKind.car,
+        isHazard: true,
+      ));
+    }
     return TrackSegment._(
       prevSeg: prev,
       lane: prev.lane,
       dStart: dStart,
       dEnd: dStart + len,
-      obstacles: const [],
+      obstacles: obstacles,
       isSwitch: true,
       resolved: false,
     );

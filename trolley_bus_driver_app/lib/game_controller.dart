@@ -66,6 +66,19 @@ class GameController extends ChangeNotifier {
 
   bool get switchModeActive => level >= 4;
 
+  /// Chance that a new switch gets a car parked on one of its two branches,
+  /// forcing the player to have the wajcha already pointed the other way by
+  /// the time it resolves. Ramps in gradually from stage 10 to 15 (so the
+  /// lever stays optional for a good while after switches first appear at
+  /// stage 4), then holds at a cap - difficulty keeps climbing beyond that
+  /// from speed and the shrinking reaction window instead.
+  double get _hazardChance {
+    if (!switchModeActive) return 0;
+    return ((stage - 10) / 5).clamp(0.0, 1.0) * 0.7;
+  }
+
+  static const hazardHitWindow = 28.0;
+
   double get _baseSpeedForStage => baseSpeed + (stage - 1) * 8;
 
   double get _maxSpeedAddForStage => maxSpeedAdd + (stage - 1) * 12;
@@ -207,7 +220,7 @@ class GameController extends ChangeNotifier {
   }
 
   TrackSegment _nextSegment(TrackSegment prev) {
-    if (switchModeActive) return TrackSegment.generateSwitch(prev, _rng);
+    if (switchModeActive) return TrackSegment.generateSwitch(prev, _rng, lanes: lanes, hazardChance: _hazardChance);
     return TrackSegment.generate(prev, lanes, maxJump, _rng);
   }
 
@@ -290,15 +303,26 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _loseLife() {
+  void _loseLife({bool playSound = true}) {
     lives--;
     if (lives <= 0) {
       _endGame();
     } else {
-      sound.loseLife();
+      if (playSound) sound.loseLife();
       busLane = currentSegment().lane;
       state = GameState.playing;
     }
+  }
+
+  /// Fired the instant the bus reaches a hazard obstacle it didn't dodge -
+  /// unlike a wire disconnect this skips the reconnect tap-QTE entirely and
+  /// costs a life outright, since "still electrically connected" doesn't
+  /// save you from having physically driven into a parked car.
+  void _hitObstacle() {
+    flashT = 0.3;
+    sound.crash();
+    HapticFeedback.heavyImpact();
+    _loseLife(playSound: false);
   }
 
   void _endGame() {
@@ -431,6 +455,16 @@ class GameController extends ChangeNotifier {
           final (hot, dead) = resolveSwitchTargets(seg.fromLane);
           seg.resolve(hot, dead);
         }
+
+        for (final ob in seg.obstacles) {
+          if (ob.isHazard && !ob.hit && ob.lane == busLane && (scrollY - ob.d).abs() < hazardHitWindow) {
+            ob.hit = true;
+            _hitObstacle();
+            break;
+          }
+        }
+        if (state != GameState.playing) break;
+
         final valid = _wireValidLanes(seg);
         final aligned = valid.contains(busLane);
 

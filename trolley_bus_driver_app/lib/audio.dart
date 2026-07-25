@@ -110,6 +110,15 @@ class SoundEngine {
 
   void loseLife() => _playBytes(_tone(220, 0.25, ToneShape.sawtooth, 0.5, glideTo: 110));
 
+  /// A physical thud, distinct from [buzz]'s electrical crackle - for
+  /// driving into a parked car rather than merely losing wire contact.
+  void crash() {
+    _playBytes(_noiseBurst(0.28, 0.9));
+    Future.delayed(const Duration(milliseconds: 40), () {
+      _playBytes(_tone(140, 0.22, ToneShape.sawtooth, 0.5, glideTo: 60));
+    });
+  }
+
   void gameOver() => _playBytes(_tone(300, 0.3, ToneShape.sawtooth, 0.4, glideTo: 90));
 
   void dispose() {
