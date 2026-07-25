@@ -455,6 +455,11 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           'Presented by: fb @Trajtekzbroda',
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white38),
         ),
+        const SizedBox(height: 4),
+        const Text(
+          'Powered by protvdo.pl',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white38),
+        ),
         const SizedBox(height: 6),
         Text(
           'build $kBuildNumber',
