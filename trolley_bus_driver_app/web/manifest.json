@@ -1,6 +1,6 @@
 {
-    "name": "zlap_prad",
-    "short_name": "zlap_prad",
+    "name": "Trolley Bus Driver",
+    "short_name": "Trolley Bus",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

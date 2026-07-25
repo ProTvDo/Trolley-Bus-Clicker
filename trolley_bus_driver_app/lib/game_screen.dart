@@ -414,7 +414,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         const TrolleybusIcon(size: 72),
         const SizedBox(height: 14),
         const Text(
-          'Troley Bus Driver',
+          'Trolley Bus Driver',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: Colors.white),
         ),

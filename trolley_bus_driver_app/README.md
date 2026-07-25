@@ -1,8 +1,8 @@
-# Złap Prąd! (Flutter)
+# Trolley Bus Driver (Flutter)
 
 Gra zręcznościowa o trolejbusie — port natywny (Android + iOS) gry
-`zlap-prad.html` z tego repo, napisany we Flutterze/Dart, tak żeby dało się
-ją opublikować w Google Play i App Store.
+`trolley-bus-driver.html` z tego repo, napisany we Flutterze/Dart, tak żeby
+dało się ją opublikować w Google Play i App Store.
 
 ## Uruchomienie lokalnie
 
@@ -19,7 +19,7 @@ pokazywać zielony ptaszek przy "Android toolchain").
 
 1. Wygeneruj klucz do podpisywania (jeśli jeszcze go nie masz):
    ```bash
-   keytool -genkey -v -keystore ~/zlap-prad-upload.jks \
+   keytool -genkey -v -keystore ~/trolley-bus-driver-upload.jks \
      -keyalg RSA -keysize 2048 -validity 10000 -alias upload
    ```
 2. Utwórz `android/key.properties` (NIE commituj go do repo):
@@ -27,7 +27,7 @@ pokazywać zielony ptaszek przy "Android toolchain").
    storePassword=...
    keyPassword=...
    keyAlias=upload
-   storeFile=/absolutna/sciezka/do/zlap-prad-upload.jks
+   storeFile=/absolutna/sciezka/do/trolley-bus-driver-upload.jks
    ```
 3. Zbuduj paczkę pod Google Play (Android App Bundle):
    ```bash

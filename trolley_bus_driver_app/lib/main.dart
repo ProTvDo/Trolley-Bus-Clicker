@@ -14,16 +14,16 @@ void main() {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  runApp(const ZlapPradApp());
+  runApp(const TrolleyBusDriverApp());
 }
 
-class ZlapPradApp extends StatelessWidget {
-  const ZlapPradApp({super.key});
+class TrolleyBusDriverApp extends StatelessWidget {
+  const TrolleyBusDriverApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Troley Bus Driver',
+      title: 'Trolley Bus Driver',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,

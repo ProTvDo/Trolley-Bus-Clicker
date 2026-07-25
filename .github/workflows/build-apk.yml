@@ -1,10 +1,10 @@
-name: Build Android APK (Złap Prąd!)
+name: Build Android APK (Trolley Bus Driver)
 
 on:
   push:
     branches: [main]
     paths:
-      - "zlap_prad_app/**"
+      - "trolley_bus_driver_app/**"
       - ".github/workflows/build-apk.yml"
   workflow_dispatch: {}
 
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: zlap_prad_app
+        working-directory: trolley_bus_driver_app
     steps:
       - uses: actions/checkout@v4
 
@@ -29,6 +29,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: zlap-prad-debug-apk-${{ github.run_number }}
-          path: zlap_prad_app/build/app/outputs/flutter-apk/app-debug.apk
+          name: trolley-bus-driver-debug-apk-${{ github.run_number }}
+          path: trolley_bus_driver_app/build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30
