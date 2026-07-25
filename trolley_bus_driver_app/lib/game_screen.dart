@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -295,10 +298,12 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF14141C),
-        title: const Text('Zakończyć grę?', style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'Wrócisz do menu startowego. Bieżąca trasa zostanie przerwana.',
-          style: TextStyle(color: Colors.white70),
+        title: const Text('Wrócić do menu?', style: TextStyle(color: Colors.white)),
+        content: Text(
+          _game.stage > 1
+              ? 'Zapiszemy Twój postęp - wrócisz na etap ${_game.stage}, kiedy zagrasz ponownie.'
+              : 'Wrócisz do menu startowego.',
+          style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
@@ -430,7 +435,18 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           style: TextStyle(fontSize: 14, color: Colors.white70, height: 1.5),
         ),
         const SizedBox(height: 22),
-        _PlayButton(label: 'Play', onTap: _game.startGame),
+        if (_game.savedStage != null) ...[
+          _PlayButton(label: 'Kontynuuj · Etap ${_game.savedStage}', onTap: _game.continueGame),
+          const SizedBox(height: 10),
+          TextButton(
+            onPressed: _game.startNewGame,
+            child: const Text(
+              'Nowa gra',
+              style: TextStyle(color: Colors.white60, fontWeight: FontWeight.w700, fontSize: 13),
+            ),
+          ),
+        ] else
+          _PlayButton(label: 'Play', onTap: _game.startGame),
         const SizedBox(height: 14),
         TextButton(
           onPressed: () => setState(() => _showLeaderboard = true),
@@ -439,6 +455,14 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
             style: TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
           ),
         ),
+        if (!kIsWeb && Platform.isAndroid)
+          TextButton(
+            onPressed: () => SystemNavigator.pop(),
+            child: const Text(
+              'Zamknij grę',
+              style: TextStyle(color: Colors.white38, fontWeight: FontWeight.w700, fontSize: 12),
+            ),
+          ),
         const SizedBox(height: 12),
         const Row(
           mainAxisAlignment: MainAxisAlignment.center,

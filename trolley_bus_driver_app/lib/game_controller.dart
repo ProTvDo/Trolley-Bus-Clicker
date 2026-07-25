@@ -164,10 +164,18 @@ class GameController extends ChangeNotifier {
   String driverName = '';
   bool scoreSaved = false;
 
+  /// Stage to resume at from the start screen's "Kontynuuj" button, or null
+  /// if there's nothing paused - set by [quitToStart], cleared once consumed
+  /// by [continueGame]/[startNewGame] or once a run actually ends in
+  /// [_endGame] (a game over closes out the paused run it belonged to).
+  int? savedStage;
+
   Future<void> _loadBest() async {
     final prefs = await SharedPreferences.getInstance();
     best = prefs.getInt('zlapprad_best') ?? 0;
     driverName = prefs.getString('zlapprad_driver_name') ?? '';
+    final saved = prefs.getInt('zlapprad_saved_stage');
+    savedStage = (saved != null && saved > 1) ? saved : null;
     leaderboard = (prefs.getStringList('zlapprad_leaderboard') ?? [])
         .map(LeaderboardEntry.decode)
         .whereType<LeaderboardEntry>()
@@ -179,6 +187,15 @@ class GameController extends ChangeNotifier {
   Future<void> _saveBest() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('zlapprad_best', best);
+  }
+
+  Future<void> _persistSavedStage(int? value) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (value == null) {
+      await prefs.remove('zlapprad_saved_stage');
+    } else {
+      await prefs.setInt('zlapprad_saved_stage', value);
+    }
   }
 
   void setDriverName(String name) {
@@ -261,15 +278,15 @@ class GameController extends ChangeNotifier {
     return [seg.lane];
   }
 
-  void startGame() {
-    stage = 1;
+  void startGame({int? atStage}) {
+    stage = atStage ?? 1;
     score = 0;
     scoreSaved = false;
     lives = maxLives;
     busLane = 1;
     busDrawX = laneX(1);
     scrollY = 0;
-    speed = baseSpeed;
+    speed = _baseSpeedForStage;
     alignedTime = 0;
     mult = 1;
     particles.clear();
@@ -277,6 +294,17 @@ class GameController extends ChangeNotifier {
     _resetTrack();
     _setupStops();
     notifyListeners();
+  }
+
+  /// Resumes at the stage saved by [quitToStart], or starts a normal fresh
+  /// run if there's nothing saved.
+  void continueGame() => startGame(atStage: savedStage);
+
+  /// Explicitly starts over from stage 1, discarding any saved checkpoint.
+  void startNewGame() {
+    savedStage = null;
+    _persistSavedStage(null);
+    startGame();
   }
 
   void _triggerDisconnect() {
@@ -333,10 +361,16 @@ class GameController extends ChangeNotifier {
       best = score.floor();
       _saveBest();
     }
+    if (savedStage != null) {
+      savedStage = null;
+      _persistSavedStage(null);
+    }
   }
 
   /// Player-initiated exit back to the start screen (the in-game quit
   /// button), as opposed to [_endGame] which fires when lives run out.
+  /// Unlike a game over, this saves the current stage so the start screen's
+  /// "Kontynuuj" button can pick the difficulty back up from here.
   void quitToStart() {
     if (state != GameState.playing &&
         state != GameState.reconnecting &&
@@ -348,6 +382,8 @@ class GameController extends ChangeNotifier {
       best = score.floor();
       _saveBest();
     }
+    savedStage = stage > 1 ? stage : null;
+    _persistSavedStage(savedStage);
     state = GameState.start;
     notifyListeners();
   }
