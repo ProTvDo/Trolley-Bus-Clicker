@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="pl">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Polityka prywatności — Trolley Bus Driver | ProTVDO</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="css/style.css" />
+		<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+		<style>
+			body {
+				background-color: #121212;
+				color: #e0e0e0;
+			}
+			.policy-container {
+				max-width: 800px;
+				margin: 120px auto 60px;
+				padding: 0 20px;
+			}
+			.policy-content h1 {
+				color: white;
+				font-size: 2.5rem;
+				margin-bottom: 40px;
+				border-bottom: 2px solid var(--primary-color);
+				padding-bottom: 20px;
+			}
+			.policy-content h2 {
+				color: white;
+				font-size: 1.5rem;
+				margin-top: 40px;
+				margin-bottom: 20px;
+			}
+			.policy-content p {
+				margin-bottom: 15px;
+				line-height: 1.8;
+				color: #b3b3b3;
+			}
+			.policy-content ul {
+				margin-bottom: 20px;
+				padding-left: 20px;
+				color: #b3b3b3;
+			}
+			.policy-content li {
+				margin-bottom: 10px;
+			}
+			.back-btn {
+				display: inline-block;
+				margin-bottom: 40px;
+				color: var(--primary-color);
+				text-decoration: none;
+				font-weight: 600;
+			}
+			.back-btn:hover {
+				color: white;
+				text-decoration: underline;
+			}
+		</style>
+	</head>
+	<body>
+		<nav class="navbar">
+			<div class="container nav-container">
+				<a href="index.html" class="logo">PRO<span>TVDO</span></a>
+				<a href="index.html" class="btn btn-primary btn-sm">Wróć do strony głównej</a>
+			</div>
+		</nav>
+
+		<div class="policy-container">
+			<a href="index.html" class="back-btn">&larr; Powrót</a>
+
+			<div class="policy-content">
+				<h1>Polityka prywatności — Trolley Bus Driver</h1>
+
+				<p>
+					Niniejsza Polityka Prywatności dotyczy gry mobilnej <strong>Trolley Bus Driver</strong>
+					(Android/iOS), wydawanej przez ProTVDO. Opisuje, jakie dane gra przetwarza — a jest
+					ich bardzo mało.
+				</p>
+
+				<h2>§1 Administrator danych</h2>
+				<ul>
+					<li><strong>Nazwa firmy:</strong> ProTVDO</li>
+					<li><strong>NIP:</strong> 8132766542</li>
+					<li><strong>Kontakt:</strong> kontakt@protvdo.pl</li>
+				</ul>
+
+				<h2>§2 Jakie dane gra przetwarza</h2>
+				<p>
+					Trolley Bus Driver <strong>nie wymaga logowania, nie łączy się z internetem i nie
+					zawiera reklam</strong>. Gra przechowuje wyłącznie lokalnie, na Twoim urządzeniu:
+				</p>
+				<ul>
+					<li>Twój najlepszy wynik.</li>
+					<li>
+						Lokalny ranking najlepszych wyników wraz z podaną przez Ciebie ksywką
+						kierowcy (jeśli zdecydujesz się ją wpisać po zakończonej rundzie) —
+						pole jest opcjonalne.
+					</li>
+					<li>Etap, na którym przerwałeś/aś grę, żeby móc wrócić do niego później.</li>
+				</ul>
+				<p>
+					Te dane nigdy nie opuszczają Twojego urządzenia — nie są wysyłane na żaden
+					serwer, nie są udostępniane ProTVDO ani żadnym podmiotom trzecim. Usuwa się je
+					automatycznie po odinstalowaniu gry.
+				</p>
+
+				<h2>§3 Analityka, reklamy, śledzenie</h2>
+				<p>
+					Gra nie zawiera żadnych bibliotek reklamowych ani analitycznych, nie śledzi
+					Twojej aktywności i nie łączy się z żadnymi zewnętrznymi serwerami — działa
+					w pełni offline.
+				</p>
+
+				<h2>§4 Uprawnienia urządzenia</h2>
+				<p>
+					Gra nie prosi o dostęp do aparatu, lokalizacji, kontaktów ani mikrofonu.
+					Jedyne co robi to zapisuje niewielkie ilości danych lokalnie (wynik, ranking,
+					etap) oraz odtwarza dźwięk generowany na urządzeniu.
+				</p>
+
+				<h2>§5 Twoje prawa</h2>
+				<p>
+					Ponieważ żadne dane nie opuszczają Twojego urządzenia, wystarczy odinstalować
+					grę, aby trwale usunąć wszystkie zapisane w niej informacje. W razie pytań
+					napisz do nas: <strong>kontakt@protvdo.pl</strong>.
+				</p>
+
+				<h2>§6 Zmiany w polityce prywatności</h2>
+				<p>
+					Zastrzegamy sobie prawo do wprowadzania zmian w tej Polityce Prywatności. Nowa
+					wersja będzie publikowana na tej podstronie.
+				</p>
+
+				<p><em>Data ostatniej aktualizacji: <span id="update-year"></span></em></p>
+			</div>
+		</div>
+
+		<footer>
+			<div class="container footer-content">
+				<p>&copy; <span class="footer-year"></span> ProTVDO. Wszelkie prawa zastrzeżone.</p>
+			</div>
+		</footer>
+
+		<script>
+			const year = new Date().getFullYear();
+			document.querySelectorAll('.footer-year').forEach(el => el.textContent = year);
+			const updateEl = document.getElementById('update-year');
+			if (updateEl) updateEl.textContent = new Date().toLocaleDateString('pl-PL', { year: 'numeric', month: 'long', day: 'numeric' });
+		</script>
+	</body>
+</html>
