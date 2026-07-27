@@ -1,0 +1,45 @@
+{
+  "@@locale": "pl",
+
+  "hudScoreLabel": "WYNIK",
+  "hudStageStatus": "etap {stage} · przystanek {passed}/{needed}",
+
+  "quitDialogTitle": "Wrócić do menu?",
+  "quitDialogBodySaved": "Zapiszemy Twój postęp - wrócisz na etap {stage}, kiedy zagrasz ponownie.",
+  "quitDialogBodyPlain": "Wrócisz do menu startowego.",
+  "cancel": "Anuluj",
+  "quitConfirm": "Zakończ",
+
+  "stopFlash": "Przystanek {passed}/{needed}",
+
+  "reconnectPrompt": "KLIKAJ!",
+  "reconnectTapsLeft": "{count, plural, one{{count} raz} other{{count} razy}}",
+
+  "startTagline": "⚡ Złap prąd! ⚡",
+  "startSubtitle": "Prowadź trolejbus pod siecią trakcyjną. Trzymaj się jej, żeby wynik rósł coraz szybciej!",
+  "continueStage": "Kontynuuj · Etap {stage}",
+  "newGame": "Nowa gra",
+  "play": "Zagraj",
+  "leaderboardButton": "Najlepsi kierowcy",
+  "closeApp": "Zamknij grę",
+  "howToLeft": "lewa strona ekranu = lewy pas",
+  "howToRight": "prawa strona ekranu = prawy pas",
+  "howToReconnect": "zgubisz kabel? klikaj szybko!",
+
+  "gameOverTitle": "BZZZT! Wypadłeś z linii",
+  "bestScoreLabel": "Najlepszy wynik: ",
+  "scoreSavedConfirm": "Zapisano do rankingu",
+  "driverNameHint": "Ksywka kierowcy",
+  "saveToLeaderboard": "Zapisz do rankingu",
+  "playAgain": "Jeszcze raz",
+
+  "leaderboardTitle": "Najlepsi kierowcy",
+  "leaderboardEmpty": "Brak wyników - zagraj pierwszy!",
+  "back": "Wróć",
+
+  "stageComplete": "Etap {stage} ukończony!",
+  "scoreLabel": "Wynik: {score}",
+  "nextStage": "Etap {stage}",
+  "go": "JEDŹ!",
+  "wajchaLabel": "WAJCHA"
+}

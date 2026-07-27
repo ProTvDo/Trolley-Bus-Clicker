@@ -43,3 +43,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Generated from lib/l10n/*.arb by `flutter gen-l10n` (runs automatically via
+# `flutter pub get`/`flutter build`, see l10n.yaml) - not source, don't commit.
+/lib/l10n/generated/
+
+# Local build outputs downloaded for manual Play Console upload.
+/build_output/

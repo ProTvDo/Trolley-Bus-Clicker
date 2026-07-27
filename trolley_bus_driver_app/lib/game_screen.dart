@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'bus_icon.dart';
 import 'game_controller.dart';
 import 'game_painter.dart';
+import 'l10n/generated/app_localizations.dart';
 import 'main.dart' show kBuildNumber;
 
 class GameScreen extends StatefulWidget {
@@ -165,6 +166,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           child: AnimatedBuilder(
             animation: _game,
             builder: (context, _) {
+              final loc = AppLocalizations.of(context)!;
               return Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,9 +174,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'WYNIK',
-                        style: TextStyle(
+                      Text(
+                        loc.hudScoreLabel,
+                        style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.2,
@@ -214,7 +216,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'etap ${_game.stage} · przystanek ${_game.stopsPassed}/${_game.stopsNeeded}',
+                        loc.hudStageStatus(_game.stage, _game.stopsPassed, _game.stopsNeeded),
                         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white38),
                       ),
                     ],
@@ -294,25 +296,24 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   }
 
   Future<void> _confirmQuit(BuildContext context) async {
+    final loc = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF14141C),
-        title: const Text('Wrócić do menu?', style: TextStyle(color: Colors.white)),
+        title: Text(loc.quitDialogTitle, style: const TextStyle(color: Colors.white)),
         content: Text(
-          _game.stage > 1
-              ? 'Zapiszemy Twój postęp - wrócisz na etap ${_game.stage}, kiedy zagrasz ponownie.'
-              : 'Wrócisz do menu startowego.',
+          _game.stage > 1 ? loc.quitDialogBodySaved(_game.stage) : loc.quitDialogBodyPlain,
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Anuluj'),
+            child: Text(loc.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Zakończ'),
+            child: Text(loc.quitConfirm),
           ),
         ],
       ),
@@ -331,6 +332,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           builder: (context, _) {
             if (_game.stopFlashT <= 0 || _game.state != GameState.playing) return const SizedBox.shrink();
             final opacity = (_game.stopFlashT / 0.9).clamp(0.0, 1.0);
+            final loc = AppLocalizations.of(context)!;
             return Center(
               child: Opacity(
                 opacity: opacity,
@@ -342,7 +344,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                     border: Border.all(color: neonYellow.withValues(alpha: 0.6)),
                   ),
                   child: Text(
-                    '🚏 Przystanek ${_game.stopsPassed}/${_game.stopsNeeded}',
+                    '🚏 ${loc.stopFlash(_game.stopsPassed, _game.stopsNeeded)}',
                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: neonYellow),
                   ),
                 ),
@@ -376,17 +378,18 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
   Widget _buildReconnectOverlay() {
     final progress = (_game.reconnectTimeLeft / GameController.reconnectTime).clamp(0.0, 1.0);
+    final loc = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'KLIKAJ!⚡',
-            style: TextStyle(fontSize: 44, fontWeight: FontWeight.w800, color: neonYellow),
+          Text(
+            '${loc.reconnectPrompt}⚡',
+            style: const TextStyle(fontSize: 44, fontWeight: FontWeight.w800, color: neonYellow),
           ),
           const SizedBox(height: 6),
           Text(
-            '${_game.reconnectTapsLeft.clamp(0, 999)} razy',
+            loc.reconnectTapsLeft(_game.reconnectTapsLeft.clamp(0, 999)),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: 14),
@@ -414,6 +417,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildStartOverlay() {
+    final loc = AppLocalizations.of(context)!;
     return _Overlay(
       children: [
         const TrolleybusIcon(size: 72),
@@ -424,54 +428,54 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: Colors.white),
         ),
         const SizedBox(height: 4),
-        const Text(
-          '⚡ Catch the current! ⚡',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: neonYellow),
+        Text(
+          loc.startTagline,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: neonYellow),
         ),
         const SizedBox(height: 14),
-        const Text(
-          'Steer the trolleybus under the overhead wire. Stay locked on and your score climbs faster the longer you hold it!',
+        Text(
+          loc.startSubtitle,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: Colors.white70, height: 1.5),
+          style: const TextStyle(fontSize: 14, color: Colors.white70, height: 1.5),
         ),
         const SizedBox(height: 22),
         if (_game.savedStage != null) ...[
-          _PlayButton(label: 'Kontynuuj · Etap ${_game.savedStage}', onTap: _game.continueGame),
+          _PlayButton(label: loc.continueStage(_game.savedStage!), onTap: _game.continueGame),
           const SizedBox(height: 10),
           TextButton(
             onPressed: _game.startNewGame,
-            child: const Text(
-              'Nowa gra',
-              style: TextStyle(color: Colors.white60, fontWeight: FontWeight.w700, fontSize: 13),
+            child: Text(
+              loc.newGame,
+              style: const TextStyle(color: Colors.white60, fontWeight: FontWeight.w700, fontSize: 13),
             ),
           ),
         ] else
-          _PlayButton(label: 'Play', onTap: _game.startGame),
+          _PlayButton(label: loc.play, onTap: _game.startGame),
         const SizedBox(height: 14),
         TextButton(
           onPressed: () => setState(() => _showLeaderboard = true),
-          child: const Text(
-            '🏆 Najlepsi kierowcy',
-            style: TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
+          child: Text(
+            '🏆 ${loc.leaderboardButton}',
+            style: const TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
           ),
         ),
         if (!kIsWeb && Platform.isAndroid)
           TextButton(
             onPressed: () => SystemNavigator.pop(),
-            child: const Text(
-              'Zamknij grę',
-              style: TextStyle(color: Colors.white38, fontWeight: FontWeight.w700, fontSize: 12),
+            child: Text(
+              loc.closeApp,
+              style: const TextStyle(color: Colors.white38, fontWeight: FontWeight.w700, fontSize: 12),
             ),
           ),
         const SizedBox(height: 12),
-        const Row(
+        Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _HowTo(icon: '👈', label: 'left side of screen = left lane'),
-            SizedBox(width: 18),
-            _HowTo(icon: '👉', label: 'right side of screen = right lane'),
-            SizedBox(width: 18),
-            _HowTo(icon: '🔌', label: 'lost the wire? tap fast!'),
+            _HowTo(icon: '👈', label: loc.howToLeft),
+            const SizedBox(width: 18),
+            _HowTo(icon: '👉', label: loc.howToRight),
+            const SizedBox(width: 18),
+            _HowTo(icon: '🔌', label: loc.howToReconnect),
           ],
         ),
         const SizedBox(height: 22),
@@ -498,11 +502,12 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       _nameController.text = _game.driverName;
       _nameControllerSynced = true;
     }
+    final loc = AppLocalizations.of(context)!;
     return _Overlay(
       children: [
-        const Text(
-          'BZZZT! Wypadłeś z linii',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white70),
+        Text(
+          loc.gameOverTitle,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white70),
         ),
         Text(
           '${_game.score.floor()}',
@@ -514,7 +519,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
             text: TextSpan(
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white70),
               children: [
-                const TextSpan(text: 'Najlepszy wynik: '),
+                TextSpan(text: loc.bestScoreLabel),
                 TextSpan(text: '${_game.best}', style: const TextStyle(color: neonCyan, fontWeight: FontWeight.bold)),
               ],
             ),
@@ -522,9 +527,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         ),
         const SizedBox(height: 14),
         if (_game.scoreSaved)
-          const Text(
-            '✓ Zapisano do rankingu',
-            style: TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
+          Text(
+            '✓ ${loc.scoreSavedConfirm}',
+            style: const TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
           )
         else ...[
           SizedBox(
@@ -538,7 +543,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
               decoration: InputDecoration(
                 counterText: '',
                 isDense: true,
-                hintText: 'Ksywka kierowcy',
+                hintText: loc.driverNameHint,
                 hintStyle: const TextStyle(color: Colors.white38),
                 filled: true,
                 fillColor: Colors.white.withValues(alpha: 0.08),
@@ -563,33 +568,34 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(color: neonCyan),
                 ),
-                child: const Text(
-                  'Zapisz do rankingu',
-                  style: TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
+                child: Text(
+                  loc.saveToLeaderboard,
+                  style: const TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
                 ),
               ),
             ),
           ),
         ],
         const SizedBox(height: 16),
-        _PlayButton(label: 'Jeszcze raz', onTap: _game.startGame),
+        _PlayButton(label: loc.playAgain, onTap: _game.startGame),
       ],
     );
   }
 
   Widget _buildLeaderboardOverlay() {
     final entries = _game.leaderboard;
+    final loc = AppLocalizations.of(context)!;
     return _Overlay(
       children: [
-        const Text(
-          '🏆 Najlepsi kierowcy',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white),
+        Text(
+          '🏆 ${loc.leaderboardTitle}',
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white),
         ),
         const SizedBox(height: 16),
         if (entries.isEmpty)
-          const Text(
-            'Brak wyników - zagraj pierwszy!',
-            style: TextStyle(color: Colors.white60, fontSize: 13),
+          Text(
+            loc.leaderboardEmpty,
+            style: const TextStyle(color: Colors.white60, fontSize: 13),
           )
         else
           ConstrainedBox(
@@ -628,16 +634,17 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
             ),
           ),
         const SizedBox(height: 20),
-        _PlayButton(label: 'Wróć', onTap: () => setState(() => _showLeaderboard = false)),
+        _PlayButton(label: loc.back, onTap: () => setState(() => _showLeaderboard = false)),
       ],
     );
   }
 
   Widget _buildStageCompleteOverlay() {
+    final loc = AppLocalizations.of(context)!;
     return _Overlay(
       children: [
         Text(
-          'Etap ${_game.stage} ukończony!',
+          loc.stageComplete(_game.stage),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white),
         ),
@@ -657,7 +664,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         ),
         const SizedBox(height: 14),
         Text(
-          'Wynik: ${_game.score.floor()}',
+          loc.scoreLabel(_game.score.floor()),
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white70),
         ),
       ],
@@ -665,11 +672,12 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildCountdownOverlay() {
-    const labels = ['3', '2', '1', 'JEDŹ!'];
+    final loc = AppLocalizations.of(context)!;
+    final labels = ['3', '2', '1', loc.go];
     return _Overlay(
       children: [
         Text(
-          'Etap ${_game.stage + 1}',
+          loc.nextStage(_game.stage + 1),
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white60, letterSpacing: 1),
         ),
         const SizedBox(height: 8),
@@ -795,9 +803,12 @@ class _WajchaControl extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _WajchaHalf(label: '⬅', selected: dir == -1, onTap: () => onSet(-1)),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 6),
-            child: Text('WAJCHA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white38, letterSpacing: 1)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Text(
+              AppLocalizations.of(context)!.wajchaLabel,
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white38, letterSpacing: 1),
+            ),
           ),
           _WajchaHalf(label: '➡', selected: dir == 1, onTap: () => onSet(1)),
         ],

@@ -1,0 +1,45 @@
+{
+  "@@locale": "de",
+
+  "hudScoreLabel": "PUNKTE",
+  "hudStageStatus": "Etappe {stage} · Haltestelle {passed}/{needed}",
+
+  "quitDialogTitle": "Zurück zum Menü?",
+  "quitDialogBodySaved": "Wir speichern deinen Fortschritt - du kehrst bei Etappe {stage} zurück, wenn du das nächste Mal spielst.",
+  "quitDialogBodyPlain": "Du kehrst zum Startbildschirm zurück.",
+  "cancel": "Abbrechen",
+  "quitConfirm": "Beenden",
+
+  "stopFlash": "Haltestelle {passed}/{needed}",
+
+  "reconnectPrompt": "TIPPEN!",
+  "reconnectTapsLeft": "{count, plural, one{{count} Mal} other{{count} Mal}}",
+
+  "startTagline": "⚡ Fang den Strom! ⚡",
+  "startSubtitle": "Steuere den Trolleybus unter der Fahrleitung. Bleib dran, damit dein Punktestand immer schneller steigt!",
+  "continueStage": "Weiter · Etappe {stage}",
+  "newGame": "Neues Spiel",
+  "play": "Spielen",
+  "leaderboardButton": "Beste Fahrer",
+  "closeApp": "App schließen",
+  "howToLeft": "linke Bildschirmseite = linke Spur",
+  "howToRight": "rechte Bildschirmseite = rechte Spur",
+  "howToReconnect": "Kontakt verloren? Schnell tippen!",
+
+  "gameOverTitle": "BZZZT! Du bist vom Draht abgekommen",
+  "bestScoreLabel": "Bestwert: ",
+  "scoreSavedConfirm": "In der Bestenliste gespeichert",
+  "driverNameHint": "Spitzname des Fahrers",
+  "saveToLeaderboard": "In der Bestenliste speichern",
+  "playAgain": "Nochmal spielen",
+
+  "leaderboardTitle": "Beste Fahrer",
+  "leaderboardEmpty": "Noch keine Ergebnisse - sei der/die Erste!",
+  "back": "Zurück",
+
+  "stageComplete": "Etappe {stage} abgeschlossen!",
+  "scoreLabel": "Punkte: {score}",
+  "nextStage": "Etappe {stage}",
+  "go": "LOS!",
+  "wajchaLabel": "HEBEL"
+}

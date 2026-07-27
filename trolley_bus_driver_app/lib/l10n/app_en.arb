@@ -1,0 +1,69 @@
+{
+  "@@locale": "en",
+
+  "hudScoreLabel": "SCORE",
+  "hudStageStatus": "stage {stage} · stop {passed}/{needed}",
+  "@hudStageStatus": {
+    "placeholders": { "stage": {}, "passed": {}, "needed": {} }
+  },
+
+  "quitDialogTitle": "Return to menu?",
+  "quitDialogBodySaved": "We'll save your progress - you'll return to stage {stage} next time you play.",
+  "@quitDialogBodySaved": {
+    "placeholders": { "stage": {} }
+  },
+  "quitDialogBodyPlain": "You'll return to the start screen.",
+  "cancel": "Cancel",
+  "quitConfirm": "Quit",
+
+  "stopFlash": "Stop {passed}/{needed}",
+  "@stopFlash": {
+    "placeholders": { "passed": {}, "needed": {} }
+  },
+
+  "reconnectPrompt": "TAP!",
+  "reconnectTapsLeft": "{count, plural, one{{count} time} other{{count} times}}",
+  "@reconnectTapsLeft": {
+    "placeholders": { "count": {} }
+  },
+
+  "startTagline": "⚡ Catch the current! ⚡",
+  "startSubtitle": "Steer the trolleybus under the overhead wire. Stay locked on and your score climbs faster the longer you hold it!",
+  "continueStage": "Continue · Stage {stage}",
+  "@continueStage": {
+    "placeholders": { "stage": {} }
+  },
+  "newGame": "New game",
+  "play": "Play",
+  "leaderboardButton": "Best drivers",
+  "closeApp": "Close app",
+  "howToLeft": "left side of screen = left lane",
+  "howToRight": "right side of screen = right lane",
+  "howToReconnect": "lost the wire? tap fast!",
+
+  "gameOverTitle": "BZZZT! You fell off the wire",
+  "bestScoreLabel": "Best score: ",
+  "scoreSavedConfirm": "Saved to leaderboard",
+  "driverNameHint": "Driver nickname",
+  "saveToLeaderboard": "Save to leaderboard",
+  "playAgain": "Play again",
+
+  "leaderboardTitle": "Best drivers",
+  "leaderboardEmpty": "No scores yet - be the first to play!",
+  "back": "Back",
+
+  "stageComplete": "Stage {stage} complete!",
+  "@stageComplete": {
+    "placeholders": { "stage": {} }
+  },
+  "scoreLabel": "Score: {score}",
+  "@scoreLabel": {
+    "placeholders": { "score": {} }
+  },
+  "nextStage": "Stage {stage}",
+  "@nextStage": {
+    "placeholders": { "stage": {} }
+  },
+  "go": "GO!",
+  "wajchaLabel": "LEVER"
+}

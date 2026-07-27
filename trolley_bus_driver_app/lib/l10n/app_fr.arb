@@ -1,0 +1,45 @@
+{
+  "@@locale": "fr",
+
+  "hudScoreLabel": "SCORE",
+  "hudStageStatus": "étape {stage} · arrêt {passed}/{needed}",
+
+  "quitDialogTitle": "Retourner au menu ?",
+  "quitDialogBodySaved": "Nous sauvegardons votre progression - vous reprendrez à l'étape {stage} la prochaine fois.",
+  "quitDialogBodyPlain": "Vous retournerez à l'écran d'accueil.",
+  "cancel": "Annuler",
+  "quitConfirm": "Quitter",
+
+  "stopFlash": "Arrêt {passed}/{needed}",
+
+  "reconnectPrompt": "TAPOTEZ !",
+  "reconnectTapsLeft": "{count, plural, one{{count} fois} other{{count} fois}}",
+
+  "startTagline": "⚡ Attrapez le courant ! ⚡",
+  "startSubtitle": "Conduisez le trolleybus sous la ligne aérienne de contact. Restez dessus pour faire grimper votre score de plus en plus vite !",
+  "continueStage": "Continuer · Étape {stage}",
+  "newGame": "Nouvelle partie",
+  "play": "Jouer",
+  "leaderboardButton": "Meilleurs conducteurs",
+  "closeApp": "Fermer l'application",
+  "howToLeft": "côté gauche de l'écran = voie de gauche",
+  "howToRight": "côté droit de l'écran = voie de droite",
+  "howToReconnect": "contact perdu ? tapotez vite !",
+
+  "gameOverTitle": "BZZZT ! Vous avez quitté la ligne",
+  "bestScoreLabel": "Meilleur score : ",
+  "scoreSavedConfirm": "Enregistré au classement",
+  "driverNameHint": "Pseudo du conducteur",
+  "saveToLeaderboard": "Enregistrer au classement",
+  "playAgain": "Rejouer",
+
+  "leaderboardTitle": "Meilleurs conducteurs",
+  "leaderboardEmpty": "Aucun score - soyez le premier à jouer !",
+  "back": "Retour",
+
+  "stageComplete": "Étape {stage} terminée !",
+  "scoreLabel": "Score : {score}",
+  "nextStage": "Étape {stage}",
+  "go": "GO !",
+  "wajchaLabel": "LEVIER"
+}

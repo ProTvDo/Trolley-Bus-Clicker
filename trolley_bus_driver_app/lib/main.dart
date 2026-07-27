@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'game_screen.dart';
+import 'l10n/generated/app_localizations.dart';
 
 /// Set via --dart-define=BUILD_NUMBER=... in CI (the Actions run number),
 /// shown on the start screen so it's always obvious which APK is installed.
@@ -30,6 +32,25 @@ class TrolleyBusDriverApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF0A0A10),
         useMaterial3: true,
       ),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      // Falls back to English for any device language we don't ship a
+      // translation for, instead of Flutter's default (first supported
+      // locale, which would otherwise silently be whichever ARB file
+      // happens to sort first).
+      localeResolutionCallback: (deviceLocale, supportedLocales) {
+        if (deviceLocale != null) {
+          for (final supported in supportedLocales) {
+            if (supported.languageCode == deviceLocale.languageCode) return supported;
+          }
+        }
+        return const Locale('en');
+      },
       home: const GameScreen(),
     );
   }
