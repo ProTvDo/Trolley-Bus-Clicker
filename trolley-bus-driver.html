@@ -258,6 +258,13 @@ initStars();
 
 function randInt(a,b){ return a + Math.floor(Math.random()*(b-a+1)); }
 
+/* Reaction window scales with how many lanes the wire jumps, so a 2-lane
+   jump gets twice the reaction time of a 1-lane change instead of the same
+   tight window. */
+function graceForJump(fromLane, lane){
+  return GRACE * Math.max(1, Math.abs(lane - fromLane));
+}
+
 function newSegment(fromLane, dStart){
   var lane;
   do { lane = randInt(0,LANES-1); } while(lane===fromLane && LANES>1);
@@ -303,8 +310,11 @@ function currentSegment(){
 }
 
 function wireValidLanes(seg){
-  if(scrollY < seg.dStart + GRACE){
-    return [seg.fromLane, seg.lane];
+  if(scrollY < seg.dStart + graceForJump(seg.fromLane, seg.lane)){
+    var lo = Math.min(seg.fromLane, seg.lane), hi = Math.max(seg.fromLane, seg.lane);
+    var lanesInBetween = [];
+    for(var l=lo; l<=hi; l++) lanesInBetween.push(l);
+    return lanesInBetween;
   }
   return [seg.lane];
 }
@@ -604,7 +614,7 @@ function drawWire(){
     var seg = segments[si];
     if(seg.dEnd<scrollY-50 || seg.dStart>scrollY+H+50) continue;
     pts.push({d:seg.dStart, x:laneX(seg.fromLane)});
-    pts.push({d:seg.dStart+GRACE, x:laneX(seg.lane)});
+    pts.push({d:seg.dStart+graceForJump(seg.fromLane, seg.lane), x:laneX(seg.lane)});
     pts.push({d:seg.dEnd, x:laneX(seg.lane)});
   }
   if(pts.length<2) return;
