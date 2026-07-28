@@ -11,10 +11,34 @@
     <xhtml:link rel="alternate" hreflang="pl" href="https://protvdo.pl/" />
   </url>
 
+  <!-- Gra Trolley Bus Driver (grywalna wersja webowa) -->
+  <url>
+    <loc>https://protvdo.pl/trolley-bus-driver/</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
   <!-- Polityka Prywatności -->
   <url>
     <loc>https://protvdo.pl/polityka.html</loc>
-    <lastmod>2026-06-18</lastmod>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <!-- Polityka Prywatności gry Trolley Bus Driver -->
+  <url>
+    <loc>https://protvdo.pl/trolley-bus-driver-polityka.html</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <!-- Regulamin -->
+  <url>
+    <loc>https://protvdo.pl/regulamin.html</loc>
+    <lastmod>2026-07-28</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>

@@ -8,7 +8,7 @@
   <!-- ═══ SEO: PODSTAWOWE META ═══ -->
   <title>Strony internetowe & produkcja wideo 4K | ProTVDO Gdynia</title>
   <meta name="description" content="ProTVDO Gdynia — strony internetowe od 800 zł netto, produkcja wideo 4K, transmisje live i agenci AI. Mamy siedzibę w Gdyni i działamy na terenie całego kraju. Bezpłatna wycena w 24h." />
-  <meta name="keywords" content="strony internetowe Gdynia, landing page Polska, sklep internetowy Gdynia, produkcja wideo 4K, transmisje live Polska, agenci AI, webdesign Gdynia, aplikacje mobilne Android iOS, oprogramowanie SaaS, lektor reklamowy, nagrania lektorskie, kiss cam wesele, kiss cam impreza, ProTVDO" />
+  <meta name="keywords" content="strony internetowe Gdynia, landing page Polska, sklep internetowy Gdynia, produkcja wideo 4K, transmisje live Polska, agenci AI, webdesign Gdynia, aplikacje mobilne Android iOS, oprogramowanie SaaS, lektor reklamowy, nagrania lektorskie, kiss cam wesele, kiss cam impreza, gry mobilne Android, tworzenie gier mobilnych, gra o trolejbusie, Trolley Bus Driver, gra zręcznościowa offline, aplikacje własne Gdynia, ProTVDO" />
   <meta name="author" content="ProTVDO" />
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
   <link rel="canonical" href="https://protvdo.pl/" />
@@ -180,6 +180,84 @@
         }
       ]
     }
+  }
+  </script>
+
+  <!-- ═══ SCHEMA.ORG: WŁASNE PRODUKTY (aplikacje i gry) ═══ -->
+  <!-- Trolley Bus Driver świadomie NIE ma tu adresu w Google Play ani
+       aggregateRating - gra jest w testach zamkniętych, więc podawanie linku
+       do sklepu albo ocen byłoby wprowadzaniem w błąd (i naraża na karę za
+       structured data). Uzupełnić po wydaniu produkcyjnym. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Aplikacje i gry stworzone przez ProTVDO",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "item": {
+          "@type": "VideoGame",
+          "name": "Trolley Bus Driver",
+          "url": "https://protvdo.pl/trolley-bus-driver/",
+          "description": "Gra zręcznościowa o prowadzeniu trolejbusu pod siecią trakcyjną — zwrotnice, przystanki, rosnąca trudność i nieskończona liczba etapów. Bez reklam, działa offline.",
+          "applicationCategory": "GameApplication",
+          "genre": ["Arcade", "Casual"],
+          "gamePlatform": ["Web browser", "Android"],
+          "playMode": "SinglePlayer",
+          "operatingSystem": "Android, Web",
+          "inLanguage": ["pl", "en", "de", "fr"],
+          "isFamilyFriendly": true,
+          "author": { "@id": "https://protvdo.pl/#organization" },
+          "publisher": { "@id": "https://protvdo.pl/#organization" },
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "PLN",
+            "availability": "https://schema.org/InStock"
+          }
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "item": {
+          "@type": "MobileApplication",
+          "name": "3City GO",
+          "url": "https://3citygo.com",
+          "installUrl": "https://play.google.com/store/apps/details?id=com.threecitygo.app",
+          "description": "Aplikacja podpowiadająca miejsca na spacer w Trójmieście na podstawie wybranego miasta i dostępnego czasu.",
+          "applicationCategory": "TravelApplication",
+          "operatingSystem": "Android",
+          "publisher": { "@id": "https://protvdo.pl/#organization" }
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "item": {
+          "@type": "WebApplication",
+          "name": "AppKierowca",
+          "url": "https://appkierowca.pl",
+          "description": "Aplikacja dla kierowców autobusów i firm transportowych — grafik pracy, zgłaszanie usterek, moduł szkoleniowy, asystent tachografu.",
+          "applicationCategory": "BusinessApplication",
+          "publisher": { "@id": "https://protvdo.pl/#organization" }
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 4,
+        "item": {
+          "@type": "WebApplication",
+          "name": "Vatra",
+          "url": "https://opiekamedyczna24.pl",
+          "description": "Aplikacja łącząca rodziny za granicą ze zweryfikowanymi opiekunami osób starszych w Polsce — raporty z wizyt, przycisk SOS.",
+          "applicationCategory": "HealthApplication",
+          "publisher": { "@id": "https://protvdo.pl/#organization" }
+        }
+      }
+    ]
   }
   </script>
 
@@ -608,6 +686,19 @@
           <a href="https://opiekamedyczna24.pl" class="card-link card-link--stretched" target="_blank" rel="noopener noreferrer">Zobacz opiekamedyczna24.pl <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
         </article>
 
+        <!-- Gra jest na razie w testach zamkniętych Google Play, więc świadomie
+             NIE ma tu plakietki Google Play - publiczny link prowadziłby do
+             "nie znaleziono". Dodać ją po wydaniu produkcyjnym. -->
+        <article class="bento-card reveal-up" data-reveal-delay="350" aria-label="Trolley Bus Driver — gra zręcznościowa">
+          <div class="bento-header">
+            <div class="icon-box" aria-hidden="true"><i class="fas fa-gamepad" aria-hidden="true"></i></div>
+            <span class="new-tag">Nowość</span>
+          </div>
+          <h3>Trolley Bus Driver</h3>
+          <p>Nasza własna gra zręcznościowa — prowadź trolejbus pod siecią trakcyjną, przełączaj zwrotnice i pobijaj rekordy. Bez reklam, w pełni offline. Wkrótce w Google Play.</p>
+          <a href="/trolley-bus-driver/" class="card-link card-link--stretched" target="_blank" rel="noopener">Zagraj w przeglądarce <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+        </article>
+
       </div>
     </div>
   </section>
@@ -1019,8 +1110,10 @@
           <li><a href="#o-nas">O nas</a></li>
           <li><a href="#jak-dzialamy">Jak działamy</a></li>
           <li><a href="#realizacje">Klienci</a></li>
+          <li><a href="#aplikacje">Nasze aplikacje i gry</a></li>
           <li><a href="#faq">FAQ</a></li>
           <li><a href="polityka.html">Polityka prywatności</a></li>
+          <li><a href="regulamin.html">Regulamin</a></li>
         </ul>
       </nav>
       <div class="footer-contact">
