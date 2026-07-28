@@ -41,5 +41,6 @@
   "scoreLabel": "Punkte: {score}",
   "nextStage": "Etappe {stage}",
   "go": "LOS!",
-  "wajchaLabel": "HEBEL"
+  "wajchaLabel": "HEBEL",
+  "updateLabel": "Update Nr."
 }

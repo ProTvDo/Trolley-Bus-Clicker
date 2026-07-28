@@ -41,5 +41,6 @@
   "scoreLabel": "Score : {score}",
   "nextStage": "Étape {stage}",
   "go": "GO !",
-  "wajchaLabel": "LEVIER"
+  "wajchaLabel": "LEVIER",
+  "updateLabel": "Mise à jour n°"
 }

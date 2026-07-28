@@ -9,6 +9,14 @@ import 'l10n/generated/app_localizations.dart';
 /// shown on the start screen so it's always obvious which APK is installed.
 const String kBuildNumber = String.fromEnvironment('BUILD_NUMBER', defaultValue: 'dev');
 
+/// Player-facing update stamp in the start screen's bottom-left corner, so
+/// players can tell at a glance that the game was updated. [kUpdateNumber] is
+/// the store versionCode (1.0.1+2 -> "2"); [kUpdateDate] is the release date
+/// as ISO yyyy-MM-dd, reformatted per the player's locale at display time.
+/// Both are injected at build time via --dart-define.
+const String kUpdateNumber = String.fromEnvironment('UPDATE_NUMBER', defaultValue: '1');
+const String kUpdateDate = String.fromEnvironment('UPDATE_DATE', defaultValue: '');
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);

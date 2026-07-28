@@ -65,5 +65,6 @@
     "placeholders": { "stage": {} }
   },
   "go": "GO!",
-  "wajchaLabel": "LEVER"
+  "wajchaLabel": "LEVER",
+  "updateLabel": "Update no."
 }

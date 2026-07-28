@@ -2,12 +2,13 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, Tar
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import 'bus_icon.dart';
 import 'game_controller.dart';
 import 'game_painter.dart';
 import 'l10n/generated/app_localizations.dart';
-import 'main.dart' show kBuildNumber;
+import 'main.dart' show kBuildNumber, kUpdateDate, kUpdateNumber;
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -117,6 +118,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                     return _buildStartOverlay();
                   },
                 ),
+                // Sits above the start overlay in the Stack: the overlay paints
+                // its own full-screen gradient, so anything drawn earlier would
+                // be hidden behind it.
+                _buildUpdateStamp(),
                 AnimatedBuilder(
                   animation: _game,
                   builder: (context, _) {
@@ -317,6 +322,44 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       ),
     );
     if (confirmed == true) _game.quitToStart();
+  }
+
+  /// "Aktualizacja nr 2 · 28.07.2026" pinned to the start screen's bottom-left
+  /// corner, so a returning player can see the game was updated. The date
+  /// arrives as ISO (see kUpdateDate) and is reformatted for the player's
+  /// locale; if it's missing or unparseable, only the number is shown.
+  Widget _buildUpdateStamp() {
+    return Positioned(
+      left: 0,
+      bottom: 0,
+      child: SafeArea(
+        child: AnimatedBuilder(
+          animation: _game,
+          builder: (context, _) {
+            if (_game.state != GameState.start || _showLeaderboard) {
+              return const SizedBox.shrink();
+            }
+            final loc = AppLocalizations.of(context)!;
+            final localeName = Localizations.localeOf(context).toLanguageTag();
+            var text = '${loc.updateLabel} $kUpdateNumber';
+            if (kUpdateDate.isNotEmpty) {
+              final parsed = DateTime.tryParse(kUpdateDate);
+              final shown = parsed == null
+                  ? kUpdateDate
+                  : DateFormat.yMd(localeName).format(parsed);
+              text = '$text · $shown';
+            }
+            return Padding(
+              padding: const EdgeInsets.only(left: 14, bottom: 10),
+              child: Text(
+                text,
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white38),
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   Widget _buildStopFlash() {

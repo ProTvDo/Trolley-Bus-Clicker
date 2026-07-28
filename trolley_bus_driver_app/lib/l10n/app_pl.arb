@@ -41,5 +41,6 @@
   "scoreLabel": "Wynik: {score}",
   "nextStage": "Etap {stage}",
   "go": "JEDŹ!",
-  "wajchaLabel": "WAJCHA"
+  "wajchaLabel": "WAJCHA",
+  "updateLabel": "Aktualizacja nr"
 }

@@ -25,7 +25,16 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
-      - run: flutter build apk --debug --dart-define=BUILD_NUMBER=${{ github.run_number }}
+
+      # UPDATE_NUMBER/UPDATE_DATE feed the player-facing update stamp on the
+      # start screen (see kUpdateNumber in lib/main.dart). Keep UPDATE_NUMBER in
+      # sync with the versionCode in pubspec.yaml for release builds; CI debug
+      # builds just reuse the run number.
+      - run: |
+          flutter build apk --debug \
+            --dart-define=BUILD_NUMBER=${{ github.run_number }} \
+            --dart-define=UPDATE_NUMBER=${{ github.run_number }} \
+            --dart-define=UPDATE_DATE=$(date -u +%Y-%m-%d)
 
       - uses: actions/upload-artifact@v4
         with:
