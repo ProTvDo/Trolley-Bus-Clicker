@@ -13,6 +13,16 @@ class GameController extends ChangeNotifier {
   GameController() {
     _loadBest();
     _resetTrack();
+  }
+
+  bool _musicStarted = false;
+
+  /// Kicks off the looping soundtrack on the player's first interaction
+  /// rather than at construction: browsers block audio that starts before a
+  /// user gesture, so autoplaying here would silently fail on the web build.
+  void _ensureMusic() {
+    if (_musicStarted) return;
+    _musicStarted = true;
     sound.startMusic();
   }
 
@@ -279,6 +289,7 @@ class GameController extends ChangeNotifier {
   }
 
   void startGame({int? atStage}) {
+    _ensureMusic();
     stage = atStage ?? 1;
     score = 0;
     scoreSaved = false;

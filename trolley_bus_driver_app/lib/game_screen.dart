@@ -1,6 +1,4 @@
-import 'dart:io' show Platform;
-
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -459,7 +457,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
             style: const TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
           ),
         ),
-        if (!kIsWeb && Platform.isAndroid)
+        // Android-only: iOS forbids in-app quit buttons, and on web there's
+        // nothing to close. defaultTargetPlatform (not dart:io's Platform)
+        // so this file still compiles for the web build.
+        if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
           TextButton(
             onPressed: () => SystemNavigator.pop(),
             child: Text(
