@@ -362,31 +362,79 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     );
   }
 
+  /// Stop plaque styled after a real trolleybus stop sign: the Gdynia stop
+  /// name, a one-line city fact, and the stage's stop counter. Holds steady
+  /// for most of its lifetime and only fades over the last moments, so the
+  /// text stays readable while the bus keeps moving underneath.
   Widget _buildStopFlash() {
     return Positioned(
-      top: 90,
+      top: 84,
       left: 0,
       right: 0,
       child: IgnorePointer(
         child: AnimatedBuilder(
           animation: _game,
           builder: (context, _) {
-            if (_game.stopFlashT <= 0 || _game.state != GameState.playing) return const SizedBox.shrink();
-            final opacity = (_game.stopFlashT / 0.9).clamp(0.0, 1.0);
+            final stop = _game.currentStop;
+            if (_game.stopFlashT <= 0 || stop == null || _game.state != GameState.playing) {
+              return const SizedBox.shrink();
+            }
+            final opacity = (_game.stopFlashT / 0.8).clamp(0.0, 1.0);
             final loc = AppLocalizations.of(context)!;
+            final lang = Localizations.localeOf(context).languageCode;
             return Center(
               child: Opacity(
                 opacity: opacity,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.symmetric(horizontal: 18),
+                  constraints: const BoxConstraints(maxWidth: 360),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.45),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: neonYellow.withValues(alpha: 0.6)),
+                    color: const Color(0xFF14141C).withValues(alpha: 0.88),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: neonYellow.withValues(alpha: 0.7), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: neonYellow.withValues(alpha: 0.25),
+                        blurRadius: 18,
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    '🚏 ${loc.stopFlash(_game.stopsPassed, _game.stopsNeeded)}',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: neonYellow),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '🚏 ${stop.name}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: neonYellow,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        stop.storyFor(lang),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          height: 1.35,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        loc.stopFlash(_game.stopsPassed, _game.stopsNeeded),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white38,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

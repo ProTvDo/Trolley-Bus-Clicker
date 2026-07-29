@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'audio.dart';
+import 'gdynia_stops.dart';
 import 'models.dart';
 
 enum GameState { start, playing, reconnecting, gameOver, stageComplete, countdown }
@@ -53,6 +54,17 @@ class GameController extends ChangeNotifier {
   int stopsPassed = 0;
   List<double> stopPositions = const [];
   double stopFlashT = 0;
+
+  /// How long the Gdynia stop plaque stays up. Much longer than a plain
+  /// counter flash, because there's a name and a sentence to actually read.
+  static const stopFlashDuration = 4.5;
+
+  /// Gdynia stop shown on the plaque right now (null before the first one).
+  GdyniaStop? currentStop;
+
+  /// Runs across stages and restarts, so a player touring the game works
+  /// through the whole list of stops instead of seeing the same few.
+  int _stopCursor = 0;
 
   void _setupStops() {
     final spacing = _stopSpacingForStage(stage);
@@ -489,13 +501,19 @@ class GameController extends ChangeNotifier {
         if (stopFlashT > 0) stopFlashT = max(0, stopFlashT - dt);
         if (stopsPassed < stopPositions.length && scrollY >= stopPositions[stopsPassed]) {
           stopsPassed++;
-          stopFlashT = 0.9;
           sound.tap();
           HapticFeedback.lightImpact();
           if (stopsPassed >= stopsNeeded) {
             _completeStage();
             break;
           }
+          // Only advance the cursor once we know the plaque will actually be
+          // shown - the last stop of a stage switches straight to the
+          // celebration screen, so consuming a name there would silently skip
+          // it for the player.
+          currentStop = kGdyniaStops[_stopCursor % kGdyniaStops.length];
+          _stopCursor++;
+          stopFlashT = stopFlashDuration;
         }
 
         final seg = currentSegment();
