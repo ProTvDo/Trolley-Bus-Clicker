@@ -202,10 +202,12 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                         ),
                     ],
                   ),
-                  Column(
+                  Flexible(
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: List.generate(GameController.maxLives, (i) {
                           final lost = i >= _game.lives;
                           return Padding(
@@ -220,9 +222,11 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                       const SizedBox(height: 4),
                       Text(
                         loc.hudStageStatus(_game.stage, _game.stopsPassed, _game.stopsNeeded),
+                        textAlign: TextAlign.right,
                         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white38),
                       ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               );
@@ -560,15 +564,16 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
             ),
           ),
         const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _HowTo(icon: '👈', label: loc.howToLeft),
-            const SizedBox(width: 18),
-            _HowTo(icon: '👉', label: loc.howToRight),
-            const SizedBox(width: 18),
-            _HowTo(icon: '🔌', label: loc.howToReconnect),
-          ],
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _HowTo(icon: '👈', label: loc.howToLeft)),
+              Expanded(child: _HowTo(icon: '👉', label: loc.howToRight)),
+              Expanded(child: _HowTo(icon: '🔌', label: loc.howToReconnect)),
+            ],
+          ),
         ),
         const SizedBox(height: 22),
         const Text(
@@ -944,8 +949,12 @@ class _HowTo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 90,
+    return Padding(
+      // Each item lives in its own Expanded 1/3rd of the row's real width -
+      // no fixed width here, so it scales down safely on narrow phones
+      // instead of forcing the row wider than the screen (the exact bug
+      // this replaced: 3 fixed 90px boxes didn't fit in a 320px-wide phone).
+      padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
         children: [
           Text(icon, style: const TextStyle(fontSize: 22)),
