@@ -91,4 +91,51 @@ void main() {
       );
     }
   });
+
+  testWidgets('pause overlay renders without overflow in every locale', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+
+    await tester.binding.setSurfaceSize(const Size(320, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    for (final locale in AppLocalizations.supportedLocales) {
+      // Keyed by locale so each iteration gets a fresh GameScreen State (and
+      // fresh GameController) instead of Flutter reconciling it with the
+      // previous iteration's - without this, the second locale would reuse
+      // the first's already-playing/already-paused controller and never
+      // show the start screen's Play button at all.
+      await tester.pumpWidget(
+        MaterialApp(
+          key: ValueKey('pause-test-${locale.languageCode}'),
+          locale: locale,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const GameScreen(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final loc = AppLocalizations.of(tester.element(find.byType(GameScreen)))!;
+      await tester.tap(find.text(loc.play));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      // The pause round button is the only '⏸' on screen before a pause is
+      // active - the overlay's own '⏸' title only appears after this tap.
+      await tester.tap(find.text('⏸'));
+      await tester.pump();
+
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'Overflow or render error on the pause overlay for locale ${locale.languageCode} at 320px width',
+      );
+    }
+  });
 }

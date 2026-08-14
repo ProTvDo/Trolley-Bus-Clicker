@@ -16,6 +16,10 @@
   "cancel": "Cancel",
   "quitConfirm": "Quit",
 
+  "pauseButton": "Pause",
+  "resumeButton": "Resume",
+  "stopButton": "Stop",
+
   "stopFlash": "Stop {passed}/{needed}",
   "@stopFlash": {
     "placeholders": { "passed": {}, "needed": {} }

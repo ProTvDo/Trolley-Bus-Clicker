@@ -10,6 +10,10 @@
   "cancel": "Anuluj",
   "quitConfirm": "Zakończ",
 
+  "pauseButton": "Pauza",
+  "resumeButton": "Start",
+  "stopButton": "Stop",
+
   "stopFlash": "Przystanek {passed}/{needed}",
 
   "reconnectPrompt": "KLIKAJ!",

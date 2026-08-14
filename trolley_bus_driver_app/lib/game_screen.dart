@@ -103,7 +103,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 _buildHud(),
                 _buildDestinationSign(),
                 _buildMuteButton(),
-                _buildQuitButton(),
+                _buildPauseButton(),
+                _buildStopButton(),
                 _buildWajchaControl(),
                 _buildStopFlash(),
                 _buildAchievementToast(),
@@ -160,6 +161,13 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                   builder: (context, _) {
                     if (_game.state != GameState.countdown) return const SizedBox.shrink();
                     return _buildCountdownOverlay();
+                  },
+                ),
+                AnimatedBuilder(
+                  animation: _game,
+                  builder: (context, _) {
+                    if (!_game.paused) return const SizedBox.shrink();
+                    return _buildPausedOverlay();
                   },
                 ),
               ],
@@ -276,7 +284,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
   Widget _buildMuteButton() {
     return Positioned(
-      top: 56,
+      top: 62,
       right: 14,
       child: SafeArea(
         child: AnimatedBuilder(
@@ -292,7 +300,28 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildQuitButton() {
+  /// Bigger and neon-outlined (44px, cyan/pink) rather than the original
+  /// 38px grey-on-grey circles - those were "prawie niewidoczne" (barely
+  /// visible) against the busy game background, per user feedback.
+  Widget _buildPauseButton() {
+    return Positioned(
+      top: 10,
+      right: 64,
+      child: SafeArea(
+        child: AnimatedBuilder(
+          animation: _game,
+          builder: (context, _) {
+            if (_game.state != GameState.playing || _game.paused) {
+              return const SizedBox.shrink();
+            }
+            return _RoundButton(icon: '⏸', accent: neonCyan, size: 44, fontSize: 18, onTap: _game.pauseGame);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStopButton() {
     return Positioned(
       top: 10,
       right: 14,
@@ -307,7 +336,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
               GameState.countdown,
             };
             if (!active.contains(_game.state)) return const SizedBox.shrink();
-            return _RoundButton(icon: '✕', onTap: () => _confirmQuit(context));
+            return _RoundButton(icon: '⏹', accent: neonPink, size: 44, fontSize: 18, onTap: () => _confirmQuit(context));
           },
         ),
       ),
@@ -654,14 +683,27 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         // Android-only: iOS forbids in-app quit buttons, and on web there's
         // nothing to close. defaultTargetPlatform (not dart:io's Platform)
         // so this file still compiles for the web build.
-        if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
-          TextButton(
-            onPressed: () => SystemNavigator.pop(),
-            child: Text(
-              loc.closeApp,
-              style: const TextStyle(color: Colors.white38, fontWeight: FontWeight.w700, fontSize: 12),
+        if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) ...[
+          const SizedBox(height: 6),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(999),
+              onTap: () => SystemNavigator.pop(),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: neonPink.withValues(alpha: 0.5)),
+                ),
+                child: Text(
+                  '⏻ ${loc.closeApp}',
+                  style: const TextStyle(color: neonPink, fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              ),
             ),
           ),
+        ],
         const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -927,6 +969,30 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       ],
     );
   }
+
+  Widget _buildPausedOverlay() {
+    final loc = AppLocalizations.of(context)!;
+    return _Overlay(
+      children: [
+        const Text('⏸', style: TextStyle(fontSize: 48, color: neonCyan)),
+        const SizedBox(height: 8),
+        Text(
+          loc.pauseButton,
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white),
+        ),
+        const SizedBox(height: 24),
+        _PlayButton(label: '▶ ${loc.resumeButton}', onTap: _game.resumeGame),
+        const SizedBox(height: 14),
+        TextButton(
+          onPressed: () => _confirmQuit(context),
+          child: Text(
+            '⏹ ${loc.stopButton}',
+            style: const TextStyle(color: Colors.white60, fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _Overlay extends StatelessWidget {
@@ -995,23 +1061,39 @@ class _PlayButton extends StatelessWidget {
 }
 
 class _RoundButton extends StatelessWidget {
-  const _RoundButton({required this.icon, required this.onTap});
+  const _RoundButton({
+    required this.icon,
+    required this.onTap,
+    this.accent,
+    this.size = 38,
+    this.fontSize = 15,
+  });
 
   final String icon;
   final VoidCallback onTap;
 
+  /// Tint for background/border - null keeps the original barely-there grey
+  /// look, used only by the mute button. Pause/stop pass a neon accent so
+  /// they actually stand out against the busy game background instead of
+  /// blending into it (the original complaint: the quit "✕" was nearly
+  /// invisible).
+  final Color? accent;
+  final double size;
+  final double fontSize;
+
   @override
   Widget build(BuildContext context) {
+    final tint = accent;
     return Material(
-      color: Colors.white.withValues(alpha: 0.08),
-      shape: const CircleBorder(side: BorderSide(color: Colors.white24)),
+      color: tint?.withValues(alpha: 0.22) ?? Colors.white.withValues(alpha: 0.08),
+      shape: CircleBorder(side: BorderSide(color: tint?.withValues(alpha: 0.85) ?? Colors.white24, width: tint != null ? 1.5 : 1)),
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: onTap,
         child: SizedBox(
-          width: 38,
-          height: 38,
-          child: Center(child: Text(icon, style: const TextStyle(fontSize: 15))),
+          width: size,
+          height: size,
+          child: Center(child: Text(icon, style: TextStyle(fontSize: fontSize, color: tint ?? Colors.white))),
         ),
       ),
     );

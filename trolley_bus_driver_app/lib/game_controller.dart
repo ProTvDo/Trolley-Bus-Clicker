@@ -199,6 +199,12 @@ class GameController extends ChangeNotifier {
   double height = 0;
 
   GameState state = GameState.start;
+
+  /// Freezes simulation in place without changing [state] - [update] no-ops
+  /// while this is true, so the reconnect QTE timer, celebration, and score
+  /// all hold exactly where they were. Reset defensively at the start of
+  /// every run since it has no meaning outside GameState.playing/reconnecting.
+  bool paused = false;
   double score = 0;
   int best = 0;
   int lives = maxLives;
@@ -352,6 +358,7 @@ class GameController extends ChangeNotifier {
     stage = atStage ?? 1;
     score = 0;
     scoreSaved = false;
+    paused = false;
     lives = maxLives;
     busLane = 1;
     busDrawX = laneX(1);
@@ -393,7 +400,7 @@ class GameController extends ChangeNotifier {
   }
 
   void reconnectTap() {
-    if (state != GameState.reconnecting) return;
+    if (paused || state != GameState.reconnecting) return;
     reconnectTapsLeft--;
     sound.tap();
     HapticFeedback.lightImpact();
@@ -440,6 +447,22 @@ class GameController extends ChangeNotifier {
     }
   }
 
+  /// Pauses an in-progress run (playing or mid-reconnect QTE); a no-op
+  /// everywhere else, e.g. during the stage-complete celebration or
+  /// countdown, where there's nothing useful to freeze.
+  void pauseGame() {
+    if (paused) return;
+    if (state != GameState.playing && state != GameState.reconnecting) return;
+    paused = true;
+    notifyListeners();
+  }
+
+  void resumeGame() {
+    if (!paused) return;
+    paused = false;
+    notifyListeners();
+  }
+
   /// Player-initiated exit back to the start screen (the in-game quit
   /// button), as opposed to [_endGame] which fires when lives run out.
   /// Unlike a game over, this saves the current stage so the start screen's
@@ -458,6 +481,7 @@ class GameController extends ChangeNotifier {
     savedStage = stage > 1 ? stage : null;
     _persistSavedStage(savedStage);
     state = GameState.start;
+    paused = false;
     notifyListeners();
   }
 
@@ -505,11 +529,12 @@ class GameController extends ChangeNotifier {
   }
 
   void moveLane(int dir) {
-    if (state != GameState.playing) return;
+    if (paused || state != GameState.playing) return;
     busLane = (busLane + dir).clamp(0, lanes - 1);
   }
 
   void handleZoneTap(bool left) {
+    if (paused) return;
     switch (state) {
       case GameState.reconnecting:
         reconnectTap();
@@ -549,6 +574,7 @@ class GameController extends ChangeNotifier {
 
   void update(double dt) {
     if (width == 0 || height == 0) return;
+    if (paused) return;
     switch (state) {
       case GameState.playing:
         scrollY += speed * dt;

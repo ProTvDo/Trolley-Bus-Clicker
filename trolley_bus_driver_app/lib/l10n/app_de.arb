@@ -10,6 +10,10 @@
   "cancel": "Abbrechen",
   "quitConfirm": "Beenden",
 
+  "pauseButton": "Pause",
+  "resumeButton": "Fortsetzen",
+  "stopButton": "Stopp",
+
   "stopFlash": "Haltestelle {passed}/{needed}",
 
   "reconnectPrompt": "TIPPEN!",
