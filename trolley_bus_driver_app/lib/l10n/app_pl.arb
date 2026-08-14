@@ -42,5 +42,9 @@
   "nextStage": "Etap {stage}",
   "go": "JEDŹ!",
   "wajchaLabel": "WAJCHA",
-  "updateLabel": "Aktualizacja nr"
+  "updateLabel": "Aktualizacja nr",
+  "achievementsButton": "Osiągnięcia",
+  "achievementUnlockedPrefix": "Osiągnięcie odblokowane",
+  "achievementsProgress": "{unlocked}/{total} odblokowanych",
+  "achievementsLocked": "Zablokowane"
 }

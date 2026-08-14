@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:trolley_bus_driver/achievements.dart';
 import 'package:trolley_bus_driver/game_screen.dart';
 import 'package:trolley_bus_driver/l10n/generated/app_localizations.dart';
 
@@ -48,6 +49,46 @@ void main() {
       print('[${locale.languageCode}] continueStage="${loc.continueStage(27)}" '
           'newGame="${loc.newGame}" closeApp="${loc.closeApp}" '
           'quitConfirm="${loc.quitConfirm}"');
+    }
+  });
+
+  testWidgets('achievements screen renders without overflow in every locale', (tester) async {
+    // One unlocked (renders icon + name + description) and the rest locked
+    // (renders the lock placeholder) - exercises both row states, which have
+    // different text lengths and are equally capable of overflowing.
+    SharedPreferences.setMockInitialValues({
+      'zlapprad_achievements': [kAchievements.first.id],
+    });
+
+    await tester.binding.setSurfaceSize(const Size(320, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    for (final locale in AppLocalizations.supportedLocales) {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: locale,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const GameScreen(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final loc = AppLocalizations.of(tester.element(find.byType(GameScreen)))!;
+      await tester.tap(find.textContaining(loc.achievementsButton));
+      await tester.pump();
+
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'Overflow or render error on the achievements screen for locale ${locale.languageCode} at 320px width',
+      );
     }
   });
 }

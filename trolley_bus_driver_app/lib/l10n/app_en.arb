@@ -66,5 +66,13 @@
   },
   "go": "GO!",
   "wajchaLabel": "LEVER",
-  "updateLabel": "Update no."
+  "updateLabel": "Update no.",
+
+  "achievementsButton": "Achievements",
+  "achievementUnlockedPrefix": "Achievement unlocked",
+  "achievementsProgress": "{unlocked}/{total} unlocked",
+  "@achievementsProgress": {
+    "placeholders": { "unlocked": {}, "total": {} }
+  },
+  "achievementsLocked": "Locked"
 }

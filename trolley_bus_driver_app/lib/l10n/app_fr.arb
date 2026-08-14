@@ -42,5 +42,9 @@
   "nextStage": "Étape {stage}",
   "go": "GO !",
   "wajchaLabel": "LEVIER",
-  "updateLabel": "Mise à jour n°"
+  "updateLabel": "Mise à jour n°",
+  "achievementsButton": "Succès",
+  "achievementUnlockedPrefix": "Succès débloqué",
+  "achievementsProgress": "{unlocked}/{total} débloqués",
+  "achievementsLocked": "Verrouillé"
 }

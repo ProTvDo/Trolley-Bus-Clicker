@@ -13,6 +13,7 @@ enum GameState { start, playing, reconnecting, gameOver, stageComplete, countdow
 class GameController extends ChangeNotifier {
   GameController() {
     _loadBest();
+    _loadAchievements();
     _resetTrack();
   }
 
@@ -65,6 +66,52 @@ class GameController extends ChangeNotifier {
   /// Runs across stages and restarts, so a player touring the game works
   /// through the whole list of stops instead of seeing the same few.
   int _stopCursor = 0;
+
+  // ---- achievements ----
+  static const achievementToastDuration = 3.2;
+
+  /// Ids from kAchievements the player has unlocked, ever - persisted, never
+  /// shrinks. Ids are stable identifiers (see achievements.dart); indices
+  /// into kAchievements are NOT used for storage since reordering the list
+  /// would silently re-award or lose achievements.
+  Set<String> unlockedAchievements = {};
+
+  /// Indices into kGdyniaStops the player has ever had shown on the plaque -
+  /// backs the "seen N stops" achievements, persisted across runs.
+  Set<int> seenStopIndices = {};
+
+  /// Achievement currently showing in the toast, or null when none is up.
+  String? justUnlockedAchievementId;
+  double achievementToastT = 0;
+
+  Future<void> _loadAchievements() async {
+    final prefs = await SharedPreferences.getInstance();
+    unlockedAchievements = (prefs.getStringList('zlapprad_achievements') ?? []).toSet();
+    seenStopIndices = (prefs.getStringList('zlapprad_seen_stops') ?? []).map(int.parse).toSet();
+    notifyListeners();
+  }
+
+  Future<void> _persistAchievements() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('zlapprad_achievements', unlockedAchievements.toList());
+  }
+
+  Future<void> _persistSeenStops() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('zlapprad_seen_stops', seenStopIndices.map((i) => i.toString()).toList());
+  }
+
+  /// Unlocks [id] if it isn't already, shows the toast, and persists it.
+  /// Safe to call repeatedly with an already-unlocked id (no-op).
+  void _unlockAchievement(String id) {
+    if (unlockedAchievements.contains(id)) return;
+    unlockedAchievements.add(id);
+    justUnlockedAchievementId = id;
+    achievementToastT = achievementToastDuration;
+    sound.success();
+    HapticFeedback.mediumImpact();
+    _persistAchievements();
+  }
 
   void _setupStops() {
     final spacing = _stopSpacingForStage(stage);
@@ -321,7 +368,10 @@ class GameController extends ChangeNotifier {
 
   /// Resumes at the stage saved by [quitToStart], or starts a normal fresh
   /// run if there's nothing saved.
-  void continueGame() => startGame(atStage: savedStage);
+  void continueGame() {
+    _unlockAchievement('powrot-za-kierownice');
+    startGame(atStage: savedStage);
+  }
 
   /// Explicitly starts over from stage 1, discarding any saved checkpoint.
   void startNewGame() {
@@ -419,6 +469,13 @@ class GameController extends ChangeNotifier {
     celebrationTimeLeft = celebrationDuration;
     sound.success();
     HapticFeedback.mediumImpact();
+
+    if (lives == maxLives) _unlockAchievement('bez-wypadku');
+    if (stage >= 4) _unlockAchievement('pierwsza-zwrotnica');
+    if (stage >= 10) _unlockAchievement('maratonczyk');
+    if (stage >= 20) _unlockAchievement('weteran');
+    if (stage >= 30) _unlockAchievement('legenda');
+
     for (var i = 0; i < 18; i++) {
       _spawnSpark(
         width / 2 + (_rng.nextDouble() * 2 - 1) * width * 0.3,
@@ -511,9 +568,17 @@ class GameController extends ChangeNotifier {
           // shown - the last stop of a stage switches straight to the
           // celebration screen, so consuming a name there would silently skip
           // it for the player.
-          currentStop = kGdyniaStops[_stopCursor % kGdyniaStops.length];
+          final stopIndex = _stopCursor % kGdyniaStops.length;
+          currentStop = kGdyniaStops[stopIndex];
           _stopCursor++;
           stopFlashT = stopFlashDuration;
+
+          if (seenStopIndices.add(stopIndex)) {
+            _persistSeenStops();
+            _unlockAchievement('pierwszy-przystanek');
+            if (seenStopIndices.length >= 5) _unlockAchievement('odkrywca');
+            if (seenStopIndices.length >= kGdyniaStops.length) _unlockAchievement('przewodnik');
+          }
         }
 
         final seg = currentSegment();
@@ -523,10 +588,15 @@ class GameController extends ChangeNotifier {
         }
 
         for (final ob in seg.obstacles) {
-          if (ob.isHazard && !ob.hit && ob.lane == busLane && (scrollY - ob.d).abs() < hazardHitWindow) {
+          if (!ob.isHazard || ob.hit) continue;
+          if (ob.lane == busLane && (scrollY - ob.d).abs() < hazardHitWindow) {
             ob.hit = true;
             _hitObstacle();
             break;
+          }
+          if (!ob.dodged && scrollY - ob.d > hazardHitWindow) {
+            ob.dodged = true;
+            _unlockAchievement('unik');
           }
         }
         if (state != GameState.playing) break;
@@ -538,6 +608,8 @@ class GameController extends ChangeNotifier {
           alignedTime += dt;
           mult = 1 + min(4, alignedTime * 0.5);
           score += (14 * mult) * dt;
+          if (mult >= 5) _unlockAchievement('idealna-jazda');
+          if (score >= 1000) _unlockAchievement('tysiac-punktow');
           if (_rng.nextDouble() < dt * 14) {
             _spawnSpark(laneX(busLane), height * busYFrac - 34);
           }
@@ -574,6 +646,7 @@ class GameController extends ChangeNotifier {
     busDrawX += (targetX - busDrawX) * min(1, dt * 10);
 
     if (flashT > 0) flashT = max(0, flashT - dt);
+    if (achievementToastT > 0) achievementToastT = max(0, achievementToastT - dt);
 
     _updateParticles(dt);
     notifyListeners();

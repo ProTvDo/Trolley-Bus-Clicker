@@ -42,5 +42,9 @@
   "nextStage": "Etappe {stage}",
   "go": "LOS!",
   "wajchaLabel": "HEBEL",
-  "updateLabel": "Update Nr."
+  "updateLabel": "Update Nr.",
+  "achievementsButton": "Erfolge",
+  "achievementUnlockedPrefix": "Erfolg freigeschaltet",
+  "achievementsProgress": "{unlocked}/{total} freigeschaltet",
+  "achievementsLocked": "Gesperrt"
 }

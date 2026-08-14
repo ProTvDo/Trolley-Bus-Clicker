@@ -4,6 +4,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import 'achievements.dart';
 import 'bus_icon.dart';
 import 'game_controller.dart';
 import 'game_painter.dart';
@@ -24,6 +25,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   final TextEditingController _nameController = TextEditingController();
   bool _nameControllerSynced = false;
   bool _showLeaderboard = false;
+  bool _showAchievements = false;
   Duration _lastElapsed = Duration.zero;
   double _tick = 0;
 
@@ -104,6 +106,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 _buildQuitButton(),
                 _buildWajchaControl(),
                 _buildStopFlash(),
+                _buildAchievementToast(),
                 AnimatedBuilder(
                   animation: _game,
                   builder: (context, _) {
@@ -114,7 +117,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 AnimatedBuilder(
                   animation: _game,
                   builder: (context, _) {
-                    if (_game.state != GameState.start || _showLeaderboard) return const SizedBox.shrink();
+                    if (_game.state != GameState.start || _showLeaderboard || _showAchievements) {
+                      return const SizedBox.shrink();
+                    }
                     return _buildStartOverlay();
                   },
                 ),
@@ -127,6 +132,13 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                   builder: (context, _) {
                     if (_game.state != GameState.start || !_showLeaderboard) return const SizedBox.shrink();
                     return _buildLeaderboardOverlay();
+                  },
+                ),
+                AnimatedBuilder(
+                  animation: _game,
+                  builder: (context, _) {
+                    if (_game.state != GameState.start || !_showAchievements) return const SizedBox.shrink();
+                    return _buildAchievementsOverlay();
                   },
                 ),
                 AnimatedBuilder(
@@ -449,6 +461,75 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     );
   }
 
+  /// Small banner for a just-unlocked achievement, deliberately placed near
+  /// the bottom of the screen (unlike the Gdynia stop plaque up top) so the
+  /// two never fight for the same space when both fire close together.
+  Widget _buildAchievementToast() {
+    return Positioned(
+      bottom: 100,
+      left: 0,
+      right: 0,
+      child: IgnorePointer(
+        child: AnimatedBuilder(
+          animation: _game,
+          builder: (context, _) {
+            final id = _game.justUnlockedAchievementId;
+            if (_game.achievementToastT <= 0 || id == null) return const SizedBox.shrink();
+            Achievement? achievement;
+            for (final a in kAchievements) {
+              if (a.id == id) {
+                achievement = a;
+                break;
+              }
+            }
+            if (achievement == null) return const SizedBox.shrink();
+            final opacity = (_game.achievementToastT / 0.6).clamp(0.0, 1.0);
+            final loc = AppLocalizations.of(context)!;
+            final lang = Localizations.localeOf(context).languageCode;
+            return Center(
+              child: Opacity(
+                opacity: opacity,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF14141C).withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: neonCyan.withValues(alpha: 0.7), width: 1.5),
+                    boxShadow: [BoxShadow(color: neonCyan.withValues(alpha: 0.25), blurRadius: 16)],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(achievement.icon, style: const TextStyle(fontSize: 26)),
+                      const SizedBox(width: 10),
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              loc.achievementUnlockedPrefix,
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: neonCyan, letterSpacing: 0.6),
+                            ),
+                            Text(
+                              achievement.nameFor(lang),
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildWajchaControl() {
     return Positioned(
       bottom: 22,
@@ -545,12 +626,30 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         ] else
           _PlayButton(label: loc.play, onTap: _game.startGame),
         const SizedBox(height: 14),
-        TextButton(
-          onPressed: () => setState(() => _showLeaderboard = true),
-          child: Text(
-            '🏆 ${loc.leaderboardButton}',
-            style: const TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              child: TextButton(
+                onPressed: () => setState(() => _showLeaderboard = true),
+                child: Text(
+                  '🏆 ${loc.leaderboardButton}',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              ),
+            ),
+            Flexible(
+              child: TextButton(
+                onPressed: () => setState(() => _showAchievements = true),
+                child: Text(
+                  '🎖️ ${loc.achievementsButton}',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              ),
+            ),
+          ],
         ),
         // Android-only: iOS forbids in-app quit buttons, and on web there's
         // nothing to close. defaultTargetPlatform (not dart:io's Platform)
@@ -732,6 +831,44 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           ),
         const SizedBox(height: 20),
         _PlayButton(label: loc.back, onTap: () => setState(() => _showLeaderboard = false)),
+      ],
+    );
+  }
+
+  Widget _buildAchievementsOverlay() {
+    final loc = AppLocalizations.of(context)!;
+    final lang = Localizations.localeOf(context).languageCode;
+    final unlocked = _game.unlockedAchievements;
+    return _Overlay(
+      children: [
+        Text(
+          '🎖️ ${loc.achievementsButton}',
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          loc.achievementsProgress(unlocked.length, kAchievements.length),
+          style: const TextStyle(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 16),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 400, minWidth: 260),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                for (final a in kAchievements)
+                  _AchievementRow(
+                    achievement: a,
+                    unlocked: unlocked.contains(a.id),
+                    lang: lang,
+                    lockedLabel: loc.achievementsLocked,
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        _PlayButton(label: loc.back, onTap: () => setState(() => _showAchievements = false)),
       ],
     );
   }
@@ -935,6 +1072,56 @@ class _WajchaHalf extends StatelessWidget {
           child: Center(
             child: Text(label, style: TextStyle(fontSize: 18, color: selected ? const Color(0xFF0A0A10) : Colors.white70)),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AchievementRow extends StatelessWidget {
+  const _AchievementRow({
+    required this.achievement,
+    required this.unlocked,
+    required this.lang,
+    required this.lockedLabel,
+  });
+
+  final Achievement achievement;
+  final bool unlocked;
+  final String lang;
+  final String lockedLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Opacity(
+        opacity: unlocked ? 1 : 0.4,
+        child: Row(
+          children: [
+            Text(unlocked ? achievement.icon : '🔒', style: const TextStyle(fontSize: 24)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    unlocked ? achievement.nameFor(lang) : lockedLabel,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: unlocked ? Colors.white : Colors.white60,
+                    ),
+                  ),
+                  if (unlocked)
+                    Text(
+                      achievement.descriptionFor(lang),
+                      style: const TextStyle(fontSize: 11.5, color: Colors.white60),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

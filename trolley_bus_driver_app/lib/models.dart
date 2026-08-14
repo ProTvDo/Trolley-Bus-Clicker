@@ -18,6 +18,10 @@ class TrackObstacle {
   /// its distance window.
   bool hit = false;
 
+  /// Set once the bus has safely passed this hazard without triggering
+  /// [hit] - backs the "Unik" achievement without re-firing every frame.
+  bool dodged = false;
+
   TrackObstacle({
     required this.lane,
     required this.d,
