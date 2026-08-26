@@ -92,6 +92,47 @@ void main() {
     }
   });
 
+  testWidgets('skins screen renders without overflow in every locale', (tester) async {
+    // 'odkrywca' unlocks the 'eco' skin - exercises an unlocked, selectable
+    // row alongside the still-locked ones, whose hint text ("Unlock: <full
+    // achievement name>") is the longest new string this screen adds and
+    // the most likely to overflow.
+    SharedPreferences.setMockInitialValues({
+      'zlapprad_achievements': ['odkrywca'],
+    });
+
+    await tester.binding.setSurfaceSize(const Size(320, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    for (final locale in AppLocalizations.supportedLocales) {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: locale,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const GameScreen(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final loc = AppLocalizations.of(tester.element(find.byType(GameScreen)))!;
+      await tester.tap(find.textContaining(loc.skinsButton));
+      await tester.pump();
+
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'Overflow or render error on the skins screen for locale ${locale.languageCode} at 320px width',
+      );
+    }
+  });
+
   testWidgets('pause overlay renders without overflow in every locale', (tester) async {
     SharedPreferences.setMockInitialValues({});
 

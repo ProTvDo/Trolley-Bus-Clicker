@@ -50,5 +50,8 @@
   "achievementsButton": "Osiągnięcia",
   "achievementUnlockedPrefix": "Osiągnięcie odblokowane",
   "achievementsProgress": "{unlocked}/{total} odblokowanych",
-  "achievementsLocked": "Zablokowane"
+  "achievementsLocked": "Zablokowane",
+
+  "skinsButton": "Wygląd",
+  "skinLockedHint": "Odblokuj: {achievement}"
 }

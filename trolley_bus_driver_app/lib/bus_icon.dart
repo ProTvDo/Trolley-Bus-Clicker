@@ -1,25 +1,33 @@
 import 'package:flutter/material.dart';
 
-import 'game_painter.dart' show neonCyan, neonYellow;
+import 'bus_skins.dart';
+import 'game_painter.dart' show neonCyan;
 
-/// Static trolleybus illustration for the welcome screen, drawn in the
-/// same style as the in-game bus so branding and gameplay art match.
+/// Static trolleybus illustration, drawn in the same style as the in-game
+/// bus so branding and gameplay art match. Used both for the welcome-screen
+/// logo (shows the player's currently equipped skin) and as the small
+/// preview icon in the skins picker.
 class TrolleybusIcon extends StatelessWidget {
-  const TrolleybusIcon({super.key, this.size = 88});
+  const TrolleybusIcon({super.key, this.size = 88, this.skin = kClassicBusSkin});
 
   final double size;
+  final BusSkin skin;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: size,
       height: size * (92 / 64),
-      child: CustomPaint(painter: _TrolleybusPainter()),
+      child: CustomPaint(painter: _TrolleybusPainter(skin)),
     );
   }
 }
 
 class _TrolleybusPainter extends CustomPainter {
+  _TrolleybusPainter(this.skin);
+
+  final BusSkin skin;
+
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
@@ -45,14 +53,14 @@ class _TrolleybusPainter extends CustomPainter {
         ..color = neonCyan
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
     );
-    canvas.drawRRect(bodyRRect, Paint()..color = const Color(0xFF2C6FE0));
+    canvas.drawRRect(bodyRRect, Paint()..color = skin.body);
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTWH(x - busW / 2, y - busH * 0.02, busW, busH * 0.16),
         Radius.circular(busW * 0.05),
       ),
-      Paint()..color = neonYellow,
+      Paint()..color = skin.stripe,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -68,5 +76,5 @@ class _TrolleybusPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _TrolleybusPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _TrolleybusPainter oldDelegate) => oldDelegate.skin != skin;
 }

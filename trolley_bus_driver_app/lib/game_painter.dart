@@ -378,13 +378,14 @@ class GamePainter extends CustomPainter {
     final glowColor = aligned ? neonCyan : const Color(0xFFFF5A5A);
     final glowBlur = aligned ? (10 + (game.mult - 1) * 10) : 14.0;
 
+    final skin = game.currentSkin;
     final bodyRRect = RRect.fromRectAndRadius(Rect.fromLTWH(x - w / 2, y - bh / 2, w, bh), const Radius.circular(12));
     canvas.drawRRect(bodyRRect, Paint()..color = glowColor..maskFilter = MaskFilter.blur(BlurStyle.normal, glowBlur / 2));
-    canvas.drawRRect(bodyRRect, Paint()..color = const Color(0xFF2C6FE0));
+    canvas.drawRRect(bodyRRect, Paint()..color = skin.body);
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(Rect.fromLTWH(x - w / 2, y - bh * 0.02, w, bh * 0.16), const Radius.circular(3)),
-      Paint()..color = neonYellow,
+      Paint()..color = skin.stripe,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(

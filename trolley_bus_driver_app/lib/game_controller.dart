@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'audio.dart';
+import 'bus_skins.dart';
 import 'gdynia_stops.dart';
 import 'models.dart';
 
@@ -88,7 +89,34 @@ class GameController extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     unlockedAchievements = (prefs.getStringList('zlapprad_achievements') ?? []).toSet();
     seenStopIndices = (prefs.getStringList('zlapprad_seen_stops') ?? []).map(int.parse).toSet();
+    selectedSkinId = prefs.getString('zlapprad_skin') ?? kClassicBusSkin.id;
     notifyListeners();
+  }
+
+  // ---- bus skins ----
+  /// Id of the equipped skin (see bus_skins.dart) - persisted, defaults to
+  /// classic. A skin is selectable once its tied achievement is in
+  /// [unlockedAchievements]; there's no separate "unlocked skins" set to
+  /// persist since that would just duplicate what achievements already track.
+  String selectedSkinId = kClassicBusSkin.id;
+
+  BusSkin get currentSkin => kBusSkins.firstWhere((s) => s.id == selectedSkinId, orElse: () => kClassicBusSkin);
+
+  bool isSkinUnlocked(BusSkin skin) =>
+      skin.requiresAchievement == null || unlockedAchievements.contains(skin.requiresAchievement);
+
+  void selectSkin(String id) {
+    final skin = kBusSkins.firstWhere((s) => s.id == id, orElse: () => kClassicBusSkin);
+    if (!isSkinUnlocked(skin)) return;
+    if (selectedSkinId == skin.id) return;
+    selectedSkinId = skin.id;
+    _persistSkin();
+    notifyListeners();
+  }
+
+  Future<void> _persistSkin() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('zlapprad_skin', selectedSkinId);
   }
 
   Future<void> _persistAchievements() async {

@@ -50,5 +50,8 @@
   "achievementsButton": "Succès",
   "achievementUnlockedPrefix": "Succès débloqué",
   "achievementsProgress": "{unlocked}/{total} débloqués",
-  "achievementsLocked": "Verrouillé"
+  "achievementsLocked": "Verrouillé",
+
+  "skinsButton": "Styles",
+  "skinLockedHint": "Débloquer : {achievement}"
 }

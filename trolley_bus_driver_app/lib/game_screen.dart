@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import 'achievements.dart';
 import 'bus_icon.dart';
+import 'bus_skins.dart';
 import 'game_controller.dart';
 import 'game_painter.dart';
 import 'l10n/generated/app_localizations.dart';
@@ -26,6 +27,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   bool _nameControllerSynced = false;
   bool _showLeaderboard = false;
   bool _showAchievements = false;
+  bool _showSkins = false;
   Duration _lastElapsed = Duration.zero;
   double _tick = 0;
 
@@ -118,7 +120,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 AnimatedBuilder(
                   animation: _game,
                   builder: (context, _) {
-                    if (_game.state != GameState.start || _showLeaderboard || _showAchievements) {
+                    if (_game.state != GameState.start || _showLeaderboard || _showAchievements || _showSkins) {
                       return const SizedBox.shrink();
                     }
                     return _buildStartOverlay();
@@ -140,6 +142,13 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                   builder: (context, _) {
                     if (_game.state != GameState.start || !_showAchievements) return const SizedBox.shrink();
                     return _buildAchievementsOverlay();
+                  },
+                ),
+                AnimatedBuilder(
+                  animation: _game,
+                  builder: (context, _) {
+                    if (_game.state != GameState.start || !_showSkins) return const SizedBox.shrink();
+                    return _buildSkinsOverlay();
                   },
                 ),
                 AnimatedBuilder(
@@ -623,7 +632,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     final loc = AppLocalizations.of(context)!;
     return _Overlay(
       children: [
-        const TrolleybusIcon(size: 72),
+        TrolleybusIcon(size: 72, skin: _game.currentSkin),
         const SizedBox(height: 14),
         const Text(
           'Trolley Bus Driver',
@@ -673,6 +682,16 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 onPressed: () => setState(() => _showAchievements = true),
                 child: Text(
                   '🎖️ ${loc.achievementsButton}',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              ),
+            ),
+            Flexible(
+              child: TextButton(
+                onPressed: () => setState(() => _showSkins = true),
+                child: Text(
+                  '🎨 ${loc.skinsButton}',
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
                 ),
@@ -913,6 +932,51 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         _PlayButton(label: loc.back, onTap: () => setState(() => _showAchievements = false)),
       ],
     );
+  }
+
+  Widget _buildSkinsOverlay() {
+    final loc = AppLocalizations.of(context)!;
+    final lang = Localizations.localeOf(context).languageCode;
+    return _Overlay(
+      children: [
+        Text(
+          '🎨 ${loc.skinsButton}',
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white),
+        ),
+        const SizedBox(height: 14),
+        TrolleybusIcon(size: 60, skin: _game.currentSkin),
+        const SizedBox(height: 16),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 360, minWidth: 260),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                for (final skin in kBusSkins)
+                  _SkinRow(
+                    skin: skin,
+                    selected: _game.selectedSkinId == skin.id,
+                    unlocked: _game.isSkinUnlocked(skin),
+                    lang: lang,
+                    lockedHint: skin.requiresAchievement == null
+                        ? ''
+                        : loc.skinLockedHint(_achievementNameFor(skin.requiresAchievement!, lang)),
+                    onTap: () => _game.selectSkin(skin.id),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        _PlayButton(label: loc.back, onTap: () => setState(() => _showSkins = false)),
+      ],
+    );
+  }
+
+  String _achievementNameFor(String achievementId, String lang) {
+    for (final a in kAchievements) {
+      if (a.id == achievementId) return a.nameFor(lang);
+    }
+    return achievementId;
   }
 
   Widget _buildStageCompleteOverlay() {
@@ -1204,6 +1268,72 @@ class _AchievementRow extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SkinRow extends StatelessWidget {
+  const _SkinRow({
+    required this.skin,
+    required this.selected,
+    required this.unlocked,
+    required this.lang,
+    required this.lockedHint,
+    required this.onTap,
+  });
+
+  final BusSkin skin;
+  final bool selected;
+  final bool unlocked;
+  final String lang;
+  final String lockedHint;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: unlocked ? 1 : 0.45,
+      child: Material(
+        color: selected ? neonCyan.withValues(alpha: 0.14) : Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: unlocked ? onTap : null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+            child: Row(
+              children: [
+                TrolleybusIcon(size: 34, skin: skin),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        skin.nameFor(lang),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: unlocked ? Colors.white : Colors.white60,
+                        ),
+                      ),
+                      if (!unlocked)
+                        Text(
+                          lockedHint,
+                          style: const TextStyle(fontSize: 11, color: Colors.white38),
+                        ),
+                    ],
+                  ),
+                ),
+                if (selected)
+                  const Text('✓', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: neonCyan))
+                else if (!unlocked)
+                  const Text('🔒', style: TextStyle(fontSize: 16)),
+              ],
+            ),
+          ),
         ),
       ),
     );

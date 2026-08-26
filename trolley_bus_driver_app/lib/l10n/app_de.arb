@@ -50,5 +50,8 @@
   "achievementsButton": "Erfolge",
   "achievementUnlockedPrefix": "Erfolg freigeschaltet",
   "achievementsProgress": "{unlocked}/{total} freigeschaltet",
-  "achievementsLocked": "Gesperrt"
+  "achievementsLocked": "Gesperrt",
+
+  "skinsButton": "Design",
+  "skinLockedHint": "Freischalten: {achievement}"
 }
