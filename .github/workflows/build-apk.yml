@@ -19,8 +19,15 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.35.5"
+          flutter-version: "3.44.8"
           channel: "stable"
+
+      # android/gradle.properties is tuned for the 3.7GB deploy VPS
+      # (org.gradle.jvmargs=-Xmx1536M, see its own commit) and OOMs Gradle's
+      # Jetifier transform on a multi-ABI debug build. ubuntu-latest runners
+      # have far more RAM, so give Gradle more headroom here only - this
+      # edits the runner's checkout, not the committed file.
+      - run: sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx4096M -XX:MaxMetaspaceSize=1024m -XX:ReservedCodeCacheSize=256m/' android/gradle.properties
 
       - run: flutter pub get
       - run: flutter analyze
