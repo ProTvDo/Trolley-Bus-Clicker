@@ -84,5 +84,7 @@
   "skinLockedHint": "Unlock: {achievement}",
   "@skinLockedHint": {
     "placeholders": { "achievement": {} }
-  }
+  },
+
+  "updateReadyBanner": "Update downloaded - tap to restart"
 }

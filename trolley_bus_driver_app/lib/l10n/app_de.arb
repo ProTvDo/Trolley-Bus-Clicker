@@ -53,5 +53,7 @@
   "achievementsLocked": "Gesperrt",
 
   "skinsButton": "Design",
-  "skinLockedHint": "Freischalten: {achievement}"
+  "skinLockedHint": "Freischalten: {achievement}",
+
+  "updateReadyBanner": "Update heruntergeladen - zum Neustart tippen"
 }

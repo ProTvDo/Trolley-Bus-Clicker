@@ -53,5 +53,7 @@
   "achievementsLocked": "Verrouillé",
 
   "skinsButton": "Styles",
-  "skinLockedHint": "Débloquer : {achievement}"
+  "skinLockedHint": "Débloquer : {achievement}",
+
+  "updateReadyBanner": "Mise à jour téléchargée - appuyez pour redémarrer"
 }

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import 'achievements.dart';
+import 'app_update.dart';
 import 'bus_icon.dart';
 import 'bus_skins.dart';
 import 'game_controller.dart';
@@ -35,6 +36,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     _ticker = createTicker(_onTick)..start();
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      AppUpdateService.instance.checkAndStart();
+    }
   }
 
   void _onTick(Duration elapsed) {
@@ -650,7 +654,34 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 14, color: Colors.white70, height: 1.5),
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 14),
+        ValueListenableBuilder<bool>(
+          valueListenable: AppUpdateService.instance.ready,
+          builder: (context, updateReady, _) {
+            if (!updateReady) return const SizedBox.shrink();
+            return Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(999),
+                onTap: () => AppUpdateService.instance.completeUpdate(),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(999),
+                    color: neonCyan.withValues(alpha: 0.14),
+                    border: Border.all(color: neonCyan.withValues(alpha: 0.6)),
+                  ),
+                  child: Text(
+                    '⬇️ ${loc.updateReadyBanner}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 12),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 8),
         if (_game.savedStage != null) ...[
           _PlayButton(label: loc.continueStage(_game.savedStage!), onTap: _game.continueGame),
           const SizedBox(height: 10),
