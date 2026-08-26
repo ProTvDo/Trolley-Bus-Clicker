@@ -56,16 +56,15 @@ class TrackSegment {
   int get fromLane => _fromLaneValue ?? _prevSeg!.lane;
 
   TrackSegment._({
-    TrackSegment? prevSeg,
-    int? fromLaneValue,
+    this._prevSeg,
+    this._fromLaneValue,
     required this.lane,
     required this.dStart,
     required this.dEnd,
     required this.obstacles,
     this.isSwitch = false,
     this.resolved = true,
-  })  : _prevSeg = prevSeg,
-        _fromLaneValue = fromLaneValue;
+  });
 
   factory TrackSegment.initial({required int lane, required double dStart, required double dEnd}) {
     return TrackSegment._(fromLaneValue: lane, lane: lane, dStart: dStart, dEnd: dEnd, obstacles: []);

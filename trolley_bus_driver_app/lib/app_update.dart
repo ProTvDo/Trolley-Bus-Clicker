@@ -1,4 +1,7 @@
 import 'package:flutter/foundation.dart';
+// in_app_update IS a direct dependency in pubspec.yaml - this is a known
+// analyzer false positive: https://github.com/dart-lang/sdk/issues/59481
+// ignore: depend_on_referenced_packages
 import 'package:in_app_update/in_app_update.dart';
 
 /// Wraps Play Core's flexible in-app update flow. Checked once at startup:
