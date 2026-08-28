@@ -55,5 +55,9 @@
   "skinsButton": "Wygląd",
   "skinLockedHint": "Odblokuj: {achievement}",
 
-  "updateReadyBanner": "Aktualizacja pobrana - dotknij, aby zrestartować"
+  "updateReadyBanner": "Aktualizacja pobrana - dotknij, aby zrestartować",
+
+  "stopsAlbumButton": "Album przystanków",
+  "stopsAlbumProgress": "{unlocked}/{total} odkrytych",
+  "stopsAlbumLocked": "Jeszcze nieodkryty"
 }

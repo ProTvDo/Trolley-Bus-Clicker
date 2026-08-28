@@ -10,6 +10,7 @@ import 'bus_icon.dart';
 import 'bus_skins.dart';
 import 'game_controller.dart';
 import 'game_painter.dart';
+import 'gdynia_stops.dart';
 import 'l10n/generated/app_localizations.dart';
 import 'main.dart' show kBuildNumber, kUpdateDate, kUpdateNumber;
 
@@ -29,6 +30,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   bool _showLeaderboard = false;
   bool _showAchievements = false;
   bool _showSkins = false;
+  bool _showStopsAlbum = false;
   Duration _lastElapsed = Duration.zero;
   double _tick = 0;
 
@@ -124,7 +126,11 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 AnimatedBuilder(
                   animation: _game,
                   builder: (context, _) {
-                    if (_game.state != GameState.start || _showLeaderboard || _showAchievements || _showSkins) {
+                    if (_game.state != GameState.start ||
+                        _showLeaderboard ||
+                        _showAchievements ||
+                        _showSkins ||
+                        _showStopsAlbum) {
                       return const SizedBox.shrink();
                     }
                     return _buildStartOverlay();
@@ -153,6 +159,13 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                   builder: (context, _) {
                     if (_game.state != GameState.start || !_showSkins) return const SizedBox.shrink();
                     return _buildSkinsOverlay();
+                  },
+                ),
+                AnimatedBuilder(
+                  animation: _game,
+                  builder: (context, _) {
+                    if (_game.state != GameState.start || !_showStopsAlbum) return const SizedBox.shrink();
+                    return _buildStopsAlbumOverlay();
                   },
                 ),
                 AnimatedBuilder(
@@ -718,11 +731,26 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 ),
               ),
             ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
             Flexible(
               child: TextButton(
                 onPressed: () => setState(() => _showSkins = true),
                 child: Text(
                   '🎨 ${loc.skinsButton}',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              ),
+            ),
+            Flexible(
+              child: TextButton(
+                onPressed: () => setState(() => _showStopsAlbum = true),
+                child: Text(
+                  '📖 ${loc.stopsAlbumButton}',
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: neonCyan, fontWeight: FontWeight.w700, fontSize: 13),
                 ),
@@ -1008,6 +1036,48 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       if (a.id == achievementId) return a.nameFor(lang);
     }
     return achievementId;
+  }
+
+  /// Browsable collection of every Gdynia stop the player has ever had
+  /// shown on the plaque (see GameController.seenStopIndices) - the same
+  /// data that backs the "odkrywca"/"przewodnik" achievements, just given
+  /// its own place to revisit rather than only flashing by mid-run.
+  Widget _buildStopsAlbumOverlay() {
+    final loc = AppLocalizations.of(context)!;
+    final lang = Localizations.localeOf(context).languageCode;
+    final seen = _game.seenStopIndices;
+    return _Overlay(
+      children: [
+        Text(
+          '📖 ${loc.stopsAlbumButton}',
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          loc.stopsAlbumProgress(seen.length, kGdyniaStops.length),
+          style: const TextStyle(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 16),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 400, minWidth: 260),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                for (var i = 0; i < kGdyniaStops.length; i++)
+                  _StopRow(
+                    stop: kGdyniaStops[i],
+                    unlocked: seen.contains(i),
+                    lang: lang,
+                    lockedLabel: loc.stopsAlbumLocked,
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        _PlayButton(label: loc.back, onTap: () => setState(() => _showStopsAlbum = false)),
+      ],
+    );
   }
 
   Widget _buildStageCompleteOverlay() {
@@ -1365,6 +1435,57 @@ class _SkinRow extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StopRow extends StatelessWidget {
+  const _StopRow({
+    required this.stop,
+    required this.unlocked,
+    required this.lang,
+    required this.lockedLabel,
+  });
+
+  final GdyniaStop stop;
+  final bool unlocked;
+  final String lang;
+  final String lockedLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Opacity(
+        opacity: unlocked ? 1 : 0.4,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(unlocked ? '🚏' : '🔒', style: const TextStyle(fontSize: 18)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    unlocked ? stop.name : lockedLabel,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: unlocked ? Colors.white : Colors.white60,
+                    ),
+                  ),
+                  if (unlocked)
+                    Text(
+                      stop.storyFor(lang),
+                      style: const TextStyle(fontSize: 11.5, color: Colors.white60),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

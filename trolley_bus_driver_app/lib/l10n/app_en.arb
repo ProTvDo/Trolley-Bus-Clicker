@@ -86,5 +86,12 @@
     "placeholders": { "achievement": {} }
   },
 
-  "updateReadyBanner": "Update downloaded - tap to restart"
+  "updateReadyBanner": "Update downloaded - tap to restart",
+
+  "stopsAlbumButton": "Stop album",
+  "stopsAlbumProgress": "{unlocked}/{total} discovered",
+  "@stopsAlbumProgress": {
+    "placeholders": { "unlocked": {}, "total": {} }
+  },
+  "stopsAlbumLocked": "Not yet discovered"
 }

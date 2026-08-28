@@ -133,6 +133,45 @@ void main() {
     }
   });
 
+  testWidgets('stops album screen renders without overflow in every locale', (tester) async {
+    // One seen stop (renders name + full trivia text, the longest content
+    // this screen shows) alongside the rest still locked.
+    SharedPreferences.setMockInitialValues({
+      'zlapprad_seen_stops': ['0'],
+    });
+
+    await tester.binding.setSurfaceSize(const Size(320, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    for (final locale in AppLocalizations.supportedLocales) {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: locale,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const GameScreen(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final loc = AppLocalizations.of(tester.element(find.byType(GameScreen)))!;
+      await tester.tap(find.textContaining(loc.stopsAlbumButton));
+      await tester.pump();
+
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'Overflow or render error on the stops album screen for locale ${locale.languageCode} at 320px width',
+      );
+    }
+  });
+
   testWidgets('pause overlay renders without overflow in every locale', (tester) async {
     SharedPreferences.setMockInitialValues({});
 

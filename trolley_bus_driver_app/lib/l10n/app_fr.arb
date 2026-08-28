@@ -55,5 +55,9 @@
   "skinsButton": "Styles",
   "skinLockedHint": "Débloquer : {achievement}",
 
-  "updateReadyBanner": "Mise à jour téléchargée - appuyez pour redémarrer"
+  "updateReadyBanner": "Mise à jour téléchargée - appuyez pour redémarrer",
+
+  "stopsAlbumButton": "Album des arrêts",
+  "stopsAlbumProgress": "{unlocked}/{total} découverts",
+  "stopsAlbumLocked": "Pas encore découvert"
 }
